@@ -12,6 +12,9 @@
     --wood: #83522f;
     --wood-dark: #503018;
     --text-muted: #555;
+    --line: rgba(0, 0, 0, 0.12);
+    --accent-dark: #126359;
+    --radius: 12px;
     --radius-lg: 40px;
     --radius-md: 20px;
     --radius-sm: 12px;
@@ -416,4 +419,77 @@ body {
 .skill-tag:hover {
     background-color: #ded8c7;
     transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Halaman Experience (Langkah 3 Tutorial)
+   ========================================================================== */
+
+.crt-container > main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background-color: var(--cream);
+    border-radius: var(--radius-sm);
+    padding: 32px;
+    box-shadow: 4px 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.experience-section {
+    padding: 2rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.section-kicker {
+    color: var(--accent-dark);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.experience-section h1 {
+    margin: 0.4rem 0 1.5rem;
+    font-size: 2rem;
+    font-family: 'Playfair Display', serif;
+    color: var(--ink);
+}
+
+.experience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.experience-card {
+    padding: 1.25rem;
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.experience-category {
+    color: var(--accent-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.experience-card h2 {
+    margin: 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--ink);
+}
+
+.experience-description,
+.empty-state {
+    color: var(--text-muted);
+}
+
+.experience-status {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
 }
