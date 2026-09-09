@@ -493,3 +493,41 @@ body {
     font-weight: 600;
     color: var(--ink);
 }
+
+/* Experience preview on Profile page */
+.experience-preview {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background-color: #ede7d5;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.experience-preview-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #7a7263;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.experience-preview-item {
+    font-size: 0.82rem;
+    color: var(--ink);
+    font-weight: 500;
+}
+
+.experience-preview-link {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--teal);
+    text-decoration: none;
+    margin-top: 6px;
+}
+
+.experience-preview-link:hover {
+    text-decoration: underline;
+}

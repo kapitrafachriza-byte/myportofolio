@@ -85,6 +85,16 @@
                                     <a href="https://linkedin.com/in/kapitra-fachriza-utomo-" target="_blank">LinkedIn</a>
                                     <a href="mailto:Kapitraf@gmail.com">Email</a>
                                 </div>
+
+                                {% if experience_list %}
+                                <div class="experience-preview">
+                                    <p class="experience-preview-label">RECENT EXPERIENCE</p>
+                                    {% for exp in experience_list %}
+                                    <p class="experience-preview-item">{{ exp.title }}</p>
+                                    {% endfor %}
+                                    <a href="{% url 'main:show_experience' %}" class="experience-preview-link">View all →</a>
+                                </div>
+                                {% endif %}
                             </div>
                         </aside>
 

@@ -13,6 +13,7 @@ def show_main(request):
             "Previously completed Highschool in just 2 consecutive year "
             "through accelerated program, reflecting my ability to adapt and learn."
         ),
+        "experience_list": Experience.objects.all(),
     }
     return render(request, "index.html", context)
 
