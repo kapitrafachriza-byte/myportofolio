@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name }} - Portfolio</title>
+    <title>Skills - {{ name }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,14 +14,14 @@
     <div class="crt-container">
 
         <nav class="top-bar">
-            <a href="{% url 'main:show_main' %}" class="nav-item active">
+            <a href="{% url 'main:show_main' %}" class="nav-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
                 <span>Profile</span>
             </a>
-            <a href="{% url 'main:show_skills' %}" class="nav-item">
+            <a href="{% url 'main:show_skills' %}" class="nav-item active">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="16 18 22 12 16 6"/>
                     <polyline points="8 6 2 12 8 18"/>
@@ -52,69 +52,38 @@
 
         <main class="content-area">
 
-            <!-- Panel Kiri: Identitas & Bio -->
-            <aside class="info-card" id="profile">
-                <p class="kicker">INFORMATION SYSTEMS &middot; UNIVERSITAS INDONESIA</p>
-                <h1 class="title">Hi! Im {{ name }}</h1>
+            <aside class="info-card">
+                <p class="kicker">CORE COMPETENCIES &amp; STACK</p>
+                <h2 class="title">Technical<br>&amp; Analytical<br>Skills</h2>
 
                 <div class="text-content">
-                    <p>{{ bio }}</p>
+                    <p>Combining foundational Information Systems theory with practical full-stack web development, relational database engineering, and fast systemic adaptability.</p>
 
-                    <div class="meta-data">
-                        <div class="meta-item">
-                            <span class="meta-label">NPM</span>
-                            <span class="meta-value">{{ npm }}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">PROGRAM</span>
-                            <span class="meta-value">{{ study_program }}</span>
-                        </div>
+                    <div class="adaptability-box">
+                        <span class="adaptability-label">FAST ADAPTABILITY QUOTIENT</span>
+                        <p class="adaptability-text">Accelerated high-school track graduate capable of picking up modern frameworks, enterprise BPMN tools, and backend workflows in expedited sprints.</p>
                     </div>
-
-                    <div class="social-links">
-                        <a href="https://github.com/kapitrafachriza-byte" target="_blank">GitHub</a>
-                        <a href="https://linkedin.com/in/kapitra-fachriza-utomo-" target="_blank">LinkedIn</a>
-                        <a href="mailto:Kapitraf@gmail.com">Email</a>
-                    </div>
-
-                    {% if experience_list %}
-                    <div class="experience-preview">
-                        <p class="experience-preview-label">RECENT EXPERIENCE</p>
-                        {% for exp in experience_list %}
-                        <p class="experience-preview-item">{{ exp.title }}</p>
-                        {% endfor %}
-                        <a href="{% url 'main:show_experience' %}" class="experience-preview-link">View all →</a>
-                    </div>
-                    {% endif %}
                 </div>
             </aside>
 
-            <!-- Panel Kanan: Rak Foto -->
-            <section class="shelf-wall">
-                <!-- Baris 1 -->
-                <div class="shelf-row">
-                    <div class="photo-item">
-                        <img src="/static/img/photoBody.png" alt="Photo of {{ name }}">
+            <section class="shelf-wall skills-shelf">
+                {% for group in grouped_skills %}
+                <div class="skill-category-card">
+                    <div class="skill-cat-header">
+                        <span class="skill-dot dot-{{ group.dot_color }}"></span>
+                        <h3 class="skill-cat-title">{{ group.title }}</h3>
                     </div>
-                    <div class="photo-item placeholder">
-                        <img src="/static/img/photo2.jpg" alt="Photo of {{ name }}">
-                    </div>
-                    <div class="photo-item placeholder">
-                        <img src="/static/img/photo3.jpg" alt="Photo of {{ name }}">
-                    </div>
-                </div>
-                <!-- Baris 2 -->
-                <div class="shelf-row">
-                    <div class="photo-item placeholder">
-                        <img src="/static/img/photo4.jpg" alt="Photo of {{ name }}">
-                    </div>
-                    <div class="photo-item placeholder">
-                        <img src="/static/img/photo5.jpg" alt="Photo of {{ name }}">
-                    </div>
-                    <div class="photo-item placeholder">
-                        <img src="/static/img/photo6.jpg" alt="Photo of {{ name }}">
+                    <div class="skill-tags">
+                        {% for skill in group.skills %}
+                        <span class="skill-tag">{{ skill.name }}</span>
+                        {% endfor %}
                     </div>
                 </div>
+                {% empty %}
+                <p class="empty-state">
+                    Belum ada skill yang ditambahkan.
+                </p>
+                {% endfor %}
             </section>
 
         </main>

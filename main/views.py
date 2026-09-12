@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from main.models import Experience
+from main.models import Experience, Skill
 
 
 def show_main(request):
@@ -23,4 +23,28 @@ def show_experience(request):
         "name": "Kapitra Fachriza Utomo",
         "experience_list": Experience.objects.all(),
     }
-    return render(request, "experience.html", context)
+    return render(request, "experience.html", context)
+
+
+def show_skills(request):
+    categories = [
+        ("programming", "green"),
+        ("infosys", "blue"),
+        ("softskill", "orange"),
+    ]
+    grouped_skills = []
+    for cat_key, dot_color in categories:
+        skills = Skill.objects.filter(category=cat_key)
+        if skills.exists():
+            grouped_skills.append({
+                "title": skills.first().get_category_display(),
+                "dot_color": dot_color,
+                "skills": skills,
+            })
+    context = {
+        "name": "Kapitra Fachriza Utomo",
+        "grouped_skills": grouped_skills,
+        "skill_list": Skill.objects.all(),
+    }
+    return render(request, "skills.html", context)
+
