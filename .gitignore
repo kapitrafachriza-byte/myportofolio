@@ -120,3 +120,6 @@ sftp-config.json
 
 # macOS
 .DS_Store
+
+# Assignment spec (local only)
+tugas-2.md

@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from main.models import Experience
+from main.models import Experience, Skill
 
 
 class MainTest(TestCase):
@@ -57,3 +57,32 @@ class MainTest(TestCase):
         self.experience.save()
         response = self.client.get(reverse("main:show_experience"))
         self.assertContains(response, "Selesai")
+
+
+class SkillTest(TestCase):
+
+    def setUp(self):
+        self.skill = Skill.objects.create(
+            name="Python",
+            category="programming",
+            dot_color="green",
+            display_order=0,
+        )
+
+    # 7. URL /skills/ dapat diakses dan menggunakan template skills.html.
+    def test_skills_url_is_accessible(self):
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "skills.html")
+
+    # 8. Data skill muncul di halaman HTML ketika ada data.
+    def test_skill_data_appears_in_page(self):
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertContains(response, "Python")
+        self.assertContains(response, "dot-green")
+
+    # 9. Halaman menampilkan pesan kondisi kosong ketika belum ada data.
+    def test_empty_skill_list(self):
+        Skill.objects.all().delete()
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertContains(response, "Belum ada skill yang ditambahkan.")
