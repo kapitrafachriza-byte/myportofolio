@@ -1,89 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience - {{ name }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% extends 'base.html' %}
 
-    <div class="crt-container">
+{% block meta %}
+<title>Experience - {{ name }}</title>
+{% endblock meta %}
 
-        <nav class="top-bar">
-            <a href="{% url 'main:show_main' %}" class="nav-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <span>Profile</span>
-            </a>
-            <a href="{% url 'main:show_skills' %}" class="nav-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="16 18 22 12 16 6"/>
-                    <polyline points="8 6 2 12 8 18"/>
-                </svg>
-                <span>Skills</span>
-            </a>
-            <a href="{% url 'main:show_experience' %}" class="nav-item active">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
-                <span>Experience</span>
-            </a>
-            <a href="#projects" class="nav-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span>Projects</span>
-            </a>
-            <a href="#contact" class="nav-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <span>Contact</span>
-            </a>
-        </nav>
+{% block content %}
+<main>
+    <section class="experience-section" id="experience">
+        <div class="container">
+            <p class="section-kicker">Perjalanan saya sejauh ini</p>
+            <h1>Experience</h1>
 
-        <main>
-            <section class="experience-section" id="experience">
-                <div class="container">
-                    <p class="section-kicker">Perjalanan saya sejauh ini</p>
-                    <h1>Experience</h1>
+            <div class="experience-grid">
+                {% for experience in experience_list %}
+                <article class="experience-card">
+                    <span class="experience-category">
+                        {{ experience.get_category_display }}
+                    </span>
+                    <h2>{{ experience.title }}</h2>
+                    <p class="experience-description">
+                        {{ experience.description }}
+                    </p>
 
-                    <div class="experience-grid">
-                        {% for experience in experience_list %}
-                        <article class="experience-card">
-                            <span class="experience-category">
-                                {{ experience.get_category_display }}
-                            </span>
-                            <h2>{{ experience.title }}</h2>
-                            <p class="experience-description">
-                                {{ experience.description }}
-                            </p>
-
-                            {% if experience.is_ongoing %}
-                                <p class="experience-status">Sedang berlangsung</p>
-                            {% else %}
-                                <p class="experience-status">Selesai</p>
-                            {% endif %}
-                        </article>
-                        {% empty %}
-                        <p class="empty-state">
-                            Belum ada pengalaman yang ditambahkan.
-                        </p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </section>
-        </main>
-
-    </div>
-
-</body>
-</html>
+                    {% if experience.is_ongoing %}
+                        <p class="experience-status">Sedang berlangsung</p>
+                    {% else %}
+                        <p class="experience-status">Selesai</p>
+                    {% endif %}
+                </article>
+                {% empty %}
+                <p class="empty-state">
+                    Belum ada pengalaman yang ditambahkan.
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}
