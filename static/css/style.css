@@ -531,3 +531,228 @@ body {
 .experience-preview-link:hover {
     text-decoration: underline;
 }
+
+/* ==========================================================================
+   Experience Header & Add Button
+   ========================================================================== */
+.experience-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-add-experience-link {
+    text-decoration: none;
+}
+
+.btn-add-experience {
+    background-color: var(--teal);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-add-experience:hover {
+    background-color: #0d4a43;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Form Page Styling (create_experience.html)
+   ========================================================================== */
+.form-page-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.form-container {
+    background-color: var(--cream);
+    border-radius: var(--radius-md);
+    padding: 36px 44px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.form-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.form-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.form-container th {
+    text-align: left;
+    vertical-align: top;
+    padding: 10px 14px 10px 0;
+    font-weight: 600;
+    color: var(--ink);
+    width: 130px;
+    font-size: 0.95rem;
+}
+
+.form-container td {
+    padding: 8px 0;
+}
+
+.form-container input[type="text"],
+.form-container input[type="url"],
+.form-container input[type="datetime-local"],
+.form-container textarea,
+.form-container select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background-color: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-container textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.form-container input:focus,
+.form-container textarea:focus,
+.form-container select:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(18, 99, 89, 0.2);
+}
+
+.btn-submit {
+    background-color: var(--teal);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: var(--radius-sm);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-submit:hover {
+    background-color: #0d4a43;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Search Form & Filter Styling
+   ========================================================================== */
+.search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 420px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.92rem;
+    background-color: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(18, 99, 89, 0.2);
+}
+
+.btn-search {
+    background-color: var(--teal);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: var(--radius-sm);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn-search:hover {
+    background-color: #0d4a43;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.btn-reset-search {
+    color: #fff;
+    background-color: #7a7263;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+}
+
+.btn-reset-search:hover {
+    background-color: #5a5449;
+}
+
+/* ==========================================================================
+   Experience Card Thumbnail Styling
+   ========================================================================== */
+.experience-thumbnail {
+    width: 100%;
+    height: 150px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 14px;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.experience-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.experience-card:hover .experience-thumbnail img {
+    transform: scale(1.04);
+}

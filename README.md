@@ -134,3 +134,27 @@ Saya menggunakan **Google Antigravity (Gemini-based AI coding assistant)** untuk
 - Penulisan model `Skill` di `models.py` (struktur field dan choices)
 - Pembuatan view `show_skills` dengan logic pengelompokan kategori
 - Pembuatan template `skills.html` dengan DTL loop
+
+---
+
+## Tutorial 3: Implementasi Skeleton, Form & Data Delivery
+
+Pada tutorial ini, saya mempelajari dan mengimplementasikan konsep utama pengembangan web modern dengan Django:
+
+1. **Pewarisan Template (Template Inheritance / Skeleton)**:
+   - Membuat template induk `templates/base.html` sebagai kerangka utama terpusat untuk elemen berulang (navbar top bar, link font, CSS, dan bingkai Retro CRT).
+   - Menghubungkan seluruh template anak (`index.html`, `skills.html`, `experience.html`) menggunakan `{% extends 'base.html' %}` dan `{% block content %}`.
+
+2. **Implementasi Form dengan `ModelForm`**:
+   - Membuat `ExperienceForm` di `main/forms.py` untuk menerima input data pengalaman (`title`, `description`, `category`).
+   - Membuat view `create_experience` dan template `create_experience.html` yang dilengkapi token keamanan `{% csrf_token %}`.
+   - Menambahkan tombol akses form pada halaman Experience.
+
+3. **Data Delivery dengan JSON & Fitur Search**:
+   - Membuat endpoint `get_experience_json` di rute `/experience/json/` yang mengembalikan data serialisasi JSON dari Django ORM.
+   - Menambahkan dukungan parameter pencarian berbasis query string (`?title=...`) dengan filter `title__icontains`.
+   - Mengubah view `show_experience` agar mengonsumsi data dari endpoint JSON secara dinamis.
+   - Menambahkan formulir pencarian (*search bar*) dan tampilan thumbnail gambar pada kartu pengalaman.
+
+4. **Pengujian (Unit Testing)**:
+   - Menambahkan test case untuk verifikasi akses form `create_experience`, pengiriman POST form, endpoint JSON `/experience/json/`, serta fungsionalitas filter pencarian (total 14 test cases lulus).

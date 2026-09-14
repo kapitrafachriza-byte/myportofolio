@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+<title>Tambah Pengalaman</title>
+{% endblock meta %}
+
+{% block content %}
+<main class="form-page-content">
+    <div class="form-container">
+        <h1 class="form-title">Tambah Pengalaman</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            <table>
+                {{ form.as_table }}
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="submit" value="Tambah Pengalaman" class="btn-submit" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</main>
+{% endblock content %}

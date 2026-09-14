@@ -58,6 +58,49 @@ class MainTest(TestCase):
         response = self.client.get(reverse("main:show_experience"))
         self.assertContains(response, "Selesai")
 
+    # 7. Halaman tambah pengalaman dapat diakses dan memakai create_experience.html.
+    def test_create_experience_url_is_accessible(self):
+        response = self.client.get(reverse("main:create_experience"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "create_experience.html")
+
+    # 8. Form tambah pengalaman berhasil menyimpan data dan me-redirect ke halaman experience.
+    def test_create_experience_post_success(self):
+        data = {
+            "title": "Software Engineer Intern",
+            "description": "Mengembangkan fitur baru menggunakan Django.",
+            "category": "internship",
+        }
+        response = self.client.post(reverse("main:create_experience"), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("main:show_experience"))
+        self.assertTrue(Experience.objects.filter(title="Software Engineer Intern").exists())
+
+    # 9. Endpoint JSON mengembalikan data dalam format application/json.
+    def test_get_experience_json_returns_json(self):
+        response = self.client.get(reverse("main:get_experience_json"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "application/json")
+        self.assertTrue(len(response.json()) > 0)
+
+    # 10. Endpoint JSON mendukung query parameter title untuk filtering.
+    def test_get_experience_json_filtered_by_title(self):
+        response = self.client.get(f"{reverse('main:get_experience_json')}?title=Asisten")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["fields"]["title"], "Asisten Dosen PBP")
+
+    # 11. Halaman web experience mendukung pencarian via GET query title.
+    def test_show_experience_search_filter(self):
+        response = self.client.get(f"{reverse('main:show_experience')}?title=Asisten")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Asisten Dosen PBP")
+
+        response_not_found = self.client.get(f"{reverse('main:show_experience')}?title=TidakAda")
+        self.assertEqual(response_not_found.status_code, 200)
+        self.assertContains(response_not_found, "Tidak ada pengalaman yang cocok")
+
 
 class SkillTest(TestCase):
 

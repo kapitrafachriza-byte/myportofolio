@@ -1,5 +1,10 @@
-from django.shortcuts import render
+import json
 
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.core import serializers
+
+from main.forms import ExperienceForm
 from main.models import Experience, Skill
 
 
@@ -19,11 +24,29 @@ def show_main(request):
 
 
 def show_experience(request):
+    raw_response = get_experience_json(request)
+    experiences_data = json.loads(raw_response.content)
+
+    category_dict = dict(Experience.EXPERIENCE_CHOICES)
+    experience_list = []
+    for item in experiences_data:
+        fields = item["fields"]
+        fields["id"] = item["pk"]
+        fields["get_category_display"] = category_dict.get(
+            fields.get("category"), fields.get("category")
+        )
+        fields["is_ongoing"] = fields.get("ended_at") is None
+        experience_list.append(fields)
+
+    filter_query = request.GET.get("title", "")
+
     context = {
         "name": "Kapitra Fachriza Utomo",
-        "experience_list": Experience.objects.all(),
+        "experience_list": experience_list,
+        "filter_query": filter_query,
     }
     return render(request, "experience.html", context)
+
 
 
 def show_skills(request):
@@ -47,4 +70,27 @@ def show_skills(request):
         "skill_list": Skill.objects.all(),
     }
     return render(request, "skills.html", context)
+
+
+def create_experience(request):
+    form = ExperienceForm(request.POST or None)
+
+    if form.is_valid() and request.method == "POST":
+        form.save()
+        return redirect("main:show_experience")
+
+    context = {"form": form}
+    return render(request, "create_experience.html", context)
+
+
+def get_experience_json(request):
+    title_query = request.GET.get("title", "")
+    experiences = Experience.objects.all()
+
+    if title_query:
+        experiences = experiences.filter(title__icontains=title_query)
+
+    experience_data = serializers.serialize("json", experiences)
+    return HttpResponse(experience_data, content_type="application/json")
+
 
