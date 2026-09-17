@@ -5,4 +5,4 @@ from main.models import Experience
 class ExperienceForm(ModelForm):
     class Meta:
         model = Experience
-        fields = ["title", "description", "category"]
+        fields = ["title", "description", "category", "thumbnail", "ended_at"]

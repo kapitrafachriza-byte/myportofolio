@@ -1,6 +1,6 @@
 import json
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.core import serializers
 
@@ -92,5 +92,23 @@ def get_experience_json(request):
 
     experience_data = serializers.serialize("json", experiences)
     return HttpResponse(experience_data, content_type="application/json")
+
+
+def edit_experience(request, id):
+    experience = get_object_or_404(Experience, pk=id)
+    form = ExperienceForm(request.POST or None, instance=experience)
+
+    if form.is_valid() and request.method == "POST":
+        form.save()
+        return redirect("main:show_experience")
+
+    context = {"form": form}
+    return render(request, "edit_experience.html", context)
+
+
+def delete_experience(request, id):
+    experience = get_object_or_404(Experience, pk=id)
+    experience.delete()
+    return redirect("main:show_experience")
 
 

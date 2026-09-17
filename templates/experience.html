@@ -54,6 +54,11 @@
                     {% else %}
                         <p class="experience-status">Selesai</p>
                     {% endif %}
+
+                    <div class="experience-actions">
+                        <a href="{% url 'main:edit_experience' experience.id %}" class="btn-edit">Edit</a>
+                        <a href="{% url 'main:delete_experience' experience.id %}" class="btn-delete">Hapus</a>
+                    </div>
                 </article>
                 {% empty %}
                 <p class="empty-state">

@@ -101,6 +101,53 @@ class MainTest(TestCase):
         self.assertEqual(response_not_found.status_code, 200)
         self.assertContains(response_not_found, "Tidak ada pengalaman yang cocok")
 
+    # 12. Halaman edit pengalaman dapat diakses dan form ter-populate dengan data yang ada.
+    def test_edit_experience_url_is_accessible(self):
+        response = self.client.get(
+            reverse("main:edit_experience", args=[self.experience.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "edit_experience.html")
+        self.assertContains(response, self.experience.title)
+
+    # 13. Form edit berhasil menyimpan perubahan data dan me-redirect ke halaman experience.
+    def test_edit_experience_post_success(self):
+        data = {
+            "title": "Asisten Dosen PBP (Updated)",
+            "description": "Deskripsi baru.",
+            "category": "internship",
+            "thumbnail": "",
+            "ended_at": "",
+        }
+        response = self.client.post(
+            reverse("main:edit_experience", args=[self.experience.id]), data
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("main:show_experience"))
+        self.experience.refresh_from_db()
+        self.assertEqual(self.experience.title, "Asisten Dosen PBP (Updated)")
+        self.assertEqual(self.experience.category, "internship")
+
+    # 14. View delete menghapus data dan me-redirect ke halaman experience.
+    def test_delete_experience_success(self):
+        experience_id = self.experience.id
+        response = self.client.get(
+            reverse("main:delete_experience", args=[experience_id])
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("main:show_experience"))
+        self.assertFalse(Experience.objects.filter(pk=experience_id).exists())
+
+    # 15. ExperienceForm memiliki field thumbnail dan ended_at.
+    def test_experience_form_includes_all_fields(self):
+        from main.forms import ExperienceForm
+        form = ExperienceForm()
+        self.assertIn("thumbnail", form.fields)
+        self.assertIn("ended_at", form.fields)
+        self.assertIn("title", form.fields)
+        self.assertIn("description", form.fields)
+        self.assertIn("category", form.fields)
+
 
 class SkillTest(TestCase):
 

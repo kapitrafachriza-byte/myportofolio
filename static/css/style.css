@@ -756,3 +756,45 @@ body {
 .experience-card:hover .experience-thumbnail img {
     transform: scale(1.04);
 }
+
+/* Experience Card Action Buttons */
+.experience-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.btn-edit,
+.btn-delete {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-edit {
+    background-color: var(--teal);
+    color: #fff;
+}
+
+.btn-edit:hover {
+    background-color: #0e4f47;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background-color: #c0392b;
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background-color: #962d22;
+    transform: translateY(-1px);
+}
