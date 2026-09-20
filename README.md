@@ -157,4 +157,45 @@ Pada tutorial ini, saya mempelajari dan mengimplementasikan konsep utama pengemb
    - Menambahkan formulir pencarian (*search bar*) dan tampilan thumbnail gambar pada kartu pengalaman.
 
 4. **Pengujian (Unit Testing)**:
-   - Menambahkan test case untuk verifikasi akses form `create_experience`, pengiriman POST form, endpoint JSON `/experience/json/`, serta fungsionalitas filter pencarian (total 14 test cases lulus).
+   - Menambahkan test case untuk verifikasi akses form `create_experience`, pengiriman POST form, endpoint JSON `/experience/json/`, serta fungsionalitas filter pencarian (total 14 test cases lulus).
+
+---
+
+### Tugas 3
+
+1. **Jelaskan mengapa kita menggunakan `ModelForm` pada Django alih-alih membuat form HTML secara manual. Selain itu, jelaskan pula mengapa kita diwajibkan menambahkan `{% csrf_token %}` pada form tersebut!**
+
+   - **Alasan menggunakan `ModelForm` dibandingkan form HTML manual:**
+     - **Prinsip DRY (*Don't Repeat Yourself*) & Efisiensi**: `ModelForm` secara otomatis memetakan field-field dari model database (seperti `CharField`, `TextField`, `URLField`, `DateTimeField`, dll.) ke dalam elemen input formulir HTML yang tepat beserta tipe dan labelnya. Kita tidak perlu menulis tag `<input>`, `<textarea>`, atau `<select>` secara manual satu per satu.
+     - **Validasi Otomatis & Terintegrasi**: `ModelForm` otomatis menerapkan aturan validasi berdasarkan definisi field di model (misalnya batasan `max_length`, `blank`/`null`, validitas format URL, tanggal, dan pilihan `choices`). Validasi dapat dipicu dengan method `form.is_valid()`, dan jika terjadi kesalahan, Django otomatis menghasilkan pesan error yang spesifik untuk masing-masing field.
+     - **Kemudahan Penyimpanan & Pembaruan Data (`form.save()`)**: Pada form manual, kita harus mengekstrak data dari `request.POST` satu per satu, mengonversi tipe data, melakukan sanitasi, lalu membuat atau memperbarui instance model secara manual. Dengan `ModelForm`, data yang telah tervalidasi dapat langsung disimpan ke database hanya dengan memanggil `form.save()`. Untuk operasi *edit/update*, kita cukup menyertakan argumen `instance=objek`.
+     - **Pembersihan & Keamanan Input**: `ModelForm` secara bawaan membersihkan data input (*cleaned data*), mencegah masukan yang tidak sesuai dan meminimalkan risiko manipulasi data yang berbahaya.
+
+   - **Alasan kewajiban menambahkan `{% csrf_token %}`:**
+     - Tag `{% csrf_token %}` menyisipkan input tersembunyi (*hidden input*) berisi token unik terenkripsi untuk melindungi aplikasi dari serangan **Cross-Site Request Forgery (CSRF)**.
+     - Serangan CSRF adalah jenis eksploitasi di mana situs jahat atau pihak ketiga mengirimkan permintaan berbahaya (seperti POST, PUT, atau DELETE) ke aplikasi web atas nama pengguna yang sedang terautentikasi tanpa izin atau sepengetahuan mereka.
+     - Django menyertakan middleware keamanan `CsrfViewMiddleware` yang secara otomatis memvalidasi apakah setiap request yang memodifikasi data (seperti POST) menyertakan token CSRF yang cocok dengan sesi pengguna. Jika token tidak disertakan atau tidak valid, Django akan langsung menolak permintaan dengan status HTTP **403 Forbidden**.
+
+2. **Pada Tutorial 03, kita membahas format data JSON dan XML. Mengapa JSON lebih disukai dalam pengembangan aplikasi web modern dibandingkan XML?**
+
+   - **Ukuran Lebih Ringkas & Hemat Bandwidth (*Lightweight*)**: JSON memiliki struktur yang ringkas tanpa tag penutup yang berulang seperti pada XML (`<title>Experience</title>` vs `"title": "Experience"`). Hal ini membuat ukuran payload data JSON jauh lebih kecil, sehingga proses transmisi data melalui jaringan internet berlangsung lebih cepat dan efisien.
+   - **Dukungan Bawaan (*Native*) di JavaScript & Browser**: JSON (*JavaScript Object Notation*) adalah format turunan langsung dari JavaScript. Browser dan runtime JavaScript dapat mengurai (*parse*) dan memproduksi (*stringify*) JSON secara instan dan sangat cepat menggunakan fungsi bawaan `JSON.parse()` dan `JSON.stringify()`, tanpa memerlukan parser eksternal atau traversal DOM yang kompleks seperti pada XML (`DOMParser`, XPath).
+   - **Pemetaan Struktur Data Alami**: JSON langsung mendukung tipe data primitif dan struktur data standar pemrograman modern, seperti objek (*key-value pair* / dictionary), array (*list*), string, number, boolean, dan null. Sebaliknya, XML memperlakukan semua data sebagai teks dan membutuhkan skema pendukung (seperti XSD) untuk mendefinisikan tipe data.
+   - **Keterbacaan yang Lebih Baik (*Human-Readable*)**: Struktur JSON yang berbasis pasangan kunci-nilai dan kurung siku/kurawal jauh lebih mudah dibaca, dipahami, dan ditulis oleh developer dibandingkan sintaks XML yang sering kali terlalu panjang (*verbose*).
+   - **Standar *De Facto* RESTful API & Framework Modern**: Seluruh ekosistem web modern (seperti React, Vue, Angular, mobile app, hingga arsitektur microservices) telah mengadopsi JSON sebagai standar utama untuk pertukaran data melalui REST API.
+
+3. **Jelaskan alur yang terjadi saat kamu menggunakan fungsi view untuk mengembalikan data portofoliomu dalam bentuk JSON. Mengapa kita perlu melakukan proses serialization pada model Django sebelum datanya dikembalikan?**
+
+   - **Alur pengembalian data dalam bentuk JSON:**
+     1. **Permintaan Masuk (*HTTP Request*)**: Klien (browser, frontend script, atau API client) mengirimkan permintaan HTTP GET ke endpoint rute URL, misalnya `/experience/json/` (dapat disertai parameter query pencarian seperti `?title=...`).
+     2. **Routing URL**: `urls.py` mencocokkan pola path dan meneruskan permintaan ke fungsi view yang sesuai (`get_experience_json`).
+     3. **Pengambilan Data dari Database**: Fungsi view berinteraksi dengan database melalui Django ORM (misalnya `Experience.objects.all()` atau `filter(title__icontains=...)`), menghasilkan `QuerySet` yang berisi sekumpulan instance objek model Python.
+     4. **Proses Serialisasi (*Serialization*)**: Objek `QuerySet` tersebut diproses oleh serialiser bawaan Django menggunakan `serializers.serialize('json', experiences)`, yang menerjemahkan objek-objek model Python tersebut menjadi string terformat JSON.
+     5. **Penyusunan HTTP Response**: String data JSON tersebut dibungkus ke dalam objek `HttpResponse(experience_data, content_type="application/json")` (atau `JsonResponse`).
+     6. **Pengiriman Respons (*HTTP Response*)**: Django mengirimkan respons HTTP (dengan status 200 OK dan header `Content-Type: application/json`) kembali ke klien. Klien kemudian dapat mendeserialisasi data JSON tersebut untuk ditampilkan pada antarmuka web.
+
+   - **Mengapa kita perlu melakukan proses *serialization*:**
+     - Objek model Django (`QuerySet` atau instance kelas model) adalah **objek Python internal yang kompleks dan hidup di dalam memori (*in-memory Python objects*)**. Objek ini memiliki method, metadata internal, serta referensi relasi yang tidak dapat langsung dipahami atau ditransmisikan melalui protokol HTTP ke klien eksternal.
+     - Protokol HTTP dan format JSON hanya dapat memproses dan mentransfer data berbasis teks dengan struktur data universal (string, number, boolean, array, object).
+     - Oleh karena itu, **serialisasi (*serialization*)** wajib dilakukan untuk mengonversi objek kompleks Python/Django ORM tersebut menjadi format representasi data standar (string JSON) yang netral-platform, sehingga dapat dikirimkan melalui jaringan dan mudah diolah kembali (*deserialized*) oleh klien apa pun (baik JavaScript di browser, aplikasi mobile, maupun sistem lain).
+
