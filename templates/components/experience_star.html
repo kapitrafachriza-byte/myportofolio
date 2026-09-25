@@ -1,0 +1,10 @@
+<form method="post" action="{% url 'main:toggle_star' experience.id %}" class="star-form">
+    {% csrf_token %}
+    <button type="submit"
+        class="button button-star{% if experience.is_starred %} is-starred{% endif %}"
+        title="{{ experience.starred_title }}">
+        <span aria-hidden="true">★</span>
+        {% if experience.is_starred %}Unstar{% else %}Star{% endif %}
+        <span class="star-count">{{ experience.star_count }}</span>
+    </button>
+</form>

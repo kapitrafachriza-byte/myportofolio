@@ -48,12 +48,39 @@ body {
     height: 72px;
     border-radius: var(--radius-md);
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 8px;
     padding: 0 24px;
     box-shadow: 2px 4px 10px rgba(0,0,0,0.3);
     flex-shrink: 0;
+}
+
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.nav-username {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--teal);
+    letter-spacing: 0.3px;
+    padding: 4px 10px;
+    background-color: rgba(18, 99, 89, 0.08);
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.nav-logout {
+    color: #c0392b !important;
+}
+
+.nav-logout:hover {
+    background-color: rgba(192, 57, 43, 0.1) !important;
+    color: #c0392b !important;
 }
 
 .nav-item {
@@ -618,6 +645,8 @@ body {
 }
 
 .form-container input[type="text"],
+.form-container input[type="password"],
+.form-container input[type="email"],
 .form-container input[type="url"],
 .form-container input[type="datetime-local"],
 .form-container textarea,
@@ -631,6 +660,23 @@ body {
     background-color: #fff;
     color: var(--ink);
     transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-container .helptext {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.form-container .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 8px 0;
+    color: #c0392b;
+    font-size: 0.82rem;
+    font-weight: 600;
 }
 
 .form-container textarea {
@@ -757,13 +803,21 @@ body {
     transform: scale(1.04);
 }
 
-/* Experience Card Action Buttons */
-.experience-actions {
+/* Experience Card Footer & Action Buttons */
+.experience-footer {
     display: flex;
-    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.experience-actions {
+    display: flex;
+    gap: 8px;
 }
 
 .btn-edit,
@@ -798,3 +852,47 @@ body {
     background-color: #962d22;
     transform: translateY(-1px);
 }
+
+/* Star Button Styling (Tutorial 4) */
+.star-form {
+    display: inline-block;
+}
+
+.button-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--ink);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.button-star:hover {
+    background-color: #333;
+    transform: translateY(-1px);
+}
+
+.button-star.is-starred {
+    background-color: #d97706; /* Amber gold */
+    color: #fff;
+}
+
+.button-star.is-starred:hover {
+    background-color: #b45309;
+}
+
+.star-count {
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.25);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+

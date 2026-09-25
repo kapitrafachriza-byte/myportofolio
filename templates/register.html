@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+<title>Register - {{ name }}</title>
+{% endblock meta %}
+
+{% block content %}
+<main class="form-page-content">
+    <div class="form-container">
+        <h1 class="form-title">Daftar Akun</h1>
+
+        {% if messages %}
+        <div class="messages-container" style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" style="padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 0.9rem; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <table>
+                {{ form.as_table }}
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="submit" name="submit" value="Daftar" class="btn-submit" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <p class="auth-switch-text" style="margin-top: 20px; font-size: 0.9rem; text-align: center; color: var(--text-muted);">
+            Sudah punya akun? <a href="{% url 'login' %}" style="color: var(--teal); font-weight: 700; text-decoration: underline;">Login di sini</a>
+        </p>
+    </div>
+</main>
+{% endblock content %}

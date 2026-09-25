@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+<title>Login - {{ name }}</title>
+{% endblock meta %}
+
+{% block content %}
+<main class="form-page-content">
+    <div class="form-container">
+        <h1 class="form-title">Login</h1>
+
+        {% if messages %}
+        <div class="messages-container" style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert" style="padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 0.9rem; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <table>
+                {{ form.as_table }}
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="submit" value="Login" class="btn-submit" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <p class="auth-switch-text" style="margin-top: 20px; font-size: 0.9rem; text-align: center; color: var(--text-muted);">
+            Belum punya akun? <a href="{% url 'register' %}" style="color: var(--teal); font-weight: 700; text-decoration: underline;">Daftar di sini</a>
+        </p>
+    </div>
+</main>
+{% endblock content %}

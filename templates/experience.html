@@ -13,9 +13,11 @@
                     <p class="section-kicker">Perjalanan saya sejauh ini</p>
                     <h1>Experience</h1>
                 </div>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_experience' %}" class="btn-add-experience-link">
                     <button class="btn-add-experience">+ Tambah Pengalaman</button>
                 </a>
+                {% endif %}
             </div>
 
             <!-- Formulir Pencarian (Data Delivery Filter) -->
@@ -55,9 +57,15 @@
                         <p class="experience-status">Selesai</p>
                     {% endif %}
 
-                    <div class="experience-actions">
-                        <a href="{% url 'main:edit_experience' experience.id %}" class="btn-edit">Edit</a>
-                        <a href="{% url 'main:delete_experience' experience.id %}" class="btn-delete">Hapus</a>
+                    <div class="experience-footer">
+                        {% include "components/experience_star.html" with experience=experience %}
+
+                        {% if user.is_superuser %}
+                        <div class="experience-actions">
+                            <a href="{% url 'main:edit_experience' experience.id %}" class="btn-edit">Edit</a>
+                            <a href="{% url 'main:delete_experience' experience.id %}" class="btn-delete">Hapus</a>
+                        </div>
+                        {% endif %}
                     </div>
                 </article>
                 {% empty %}

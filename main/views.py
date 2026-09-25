@@ -3,6 +3,8 @@ import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.core import serializers
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 
 from main.forms import ExperienceForm
 from main.models import Experience, Skill
@@ -19,6 +21,7 @@ def show_main(request):
             "through accelerated program, reflecting my ability to adapt and learn."
         ),
         "experience_list": Experience.objects.all(),
+        "last_login": request.COOKIES.get("last_login", "Belum pernah login"),
     }
     return render(request, "index.html", context)
 
@@ -36,6 +39,24 @@ def show_experience(request):
             fields.get("category"), fields.get("category")
         )
         fields["is_ongoing"] = fields.get("ended_at") is None
+
+        # Informasi Star
+        raw_starred = fields.get("starred_by", [])
+        starred_usernames = [
+            u[0] if isinstance(u, list) else u for u in raw_starred
+        ]
+        fields["starred_users"] = starred_usernames
+        fields["star_count"] = len(starred_usernames)
+        fields["is_starred"] = (
+            request.user.username in starred_usernames
+            if request.user.is_authenticated
+            else False
+        )
+        fields["starred_title"] = (
+            f"Dibintangi oleh {', '.join(starred_usernames)}"
+            if starred_usernames
+            else "Belum ada yang membintangi"
+        )
         experience_list.append(fields)
 
     filter_query = request.GET.get("title", "")
@@ -72,7 +93,11 @@ def show_skills(request):
     return render(request, "skills.html", context)
 
 
+@login_required(login_url="/login/")
 def create_experience(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = ExperienceForm(request.POST or None)
 
     if form.is_valid() and request.method == "POST":
@@ -90,11 +115,17 @@ def get_experience_json(request):
     if title_query:
         experiences = experiences.filter(title__icontains=title_query)
 
-    experience_data = serializers.serialize("json", experiences)
+    experience_data = serializers.serialize(
+        "json", experiences, use_natural_foreign_keys=True
+    )
     return HttpResponse(experience_data, content_type="application/json")
 
 
+@login_required(login_url="/login/")
 def edit_experience(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     experience = get_object_or_404(Experience, pk=id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
@@ -106,9 +137,25 @@ def edit_experience(request, id):
     return render(request, "edit_experience.html", context)
 
 
+@login_required(login_url="/login/")
 def delete_experience(request, id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     experience = get_object_or_404(Experience, pk=id)
     experience.delete()
     return redirect("main:show_experience")
+
+
+@login_required(login_url="/login/")
+def toggle_star(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
+    if request.method == "POST":
+        if request.user in experience.starred_by.all():
+            experience.starred_by.remove(request.user)
+        else:
+            experience.starred_by.add(request.user)
+    return redirect("main:show_experience")
+
 
 
