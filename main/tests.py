@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -13,8 +13,13 @@ class MainTest(TestCase):
             username="adminuser", password="adminpassword", email="admin@example.com"
         )
         self.regular_user = User.objects.create_user(
-            username="regularuser", password="regularpassword"
+            username="regularuser", password="regularpassword", email="regular@example.com"
         )
+        self.editor_group = Group.objects.create(name="Editor")
+        self.editor_user = User.objects.create_user(
+            username="editoruser", password="editorpassword", email="editor@example.com"
+        )
+        self.editor_user.groups.add(self.editor_group)
         self.experience = Experience.objects.create(
             title="Asisten Dosen PBP",
             description="Membantu mahasiswa memahami dasar pengembangan web.",
@@ -184,7 +189,7 @@ class MainTest(TestCase):
         self.assertEqual(response_unstar.status_code, 302)
         self.assertNotIn(self.regular_user, self.experience.starred_by.all())
 
-    # 15. ExperienceForm memiliki field thumbnail dan ended_at.
+    # 18. ExperienceForm memiliki field thumbnail dan ended_at.
     def test_experience_form_includes_all_fields(self):
         from main.forms import ExperienceForm
         form = ExperienceForm()
@@ -193,6 +198,87 @@ class MainTest(TestCase):
         self.assertIn("title", form.fields)
         self.assertIn("description", form.fields)
         self.assertIn("category", form.fields)
+
+    # 19. Editor dapat mengakses halaman edit pengalaman (200).
+    def test_editor_can_access_edit_experience(self):
+        self.client.force_login(self.editor_user)
+        response = self.client.get(
+            reverse("main:edit_experience", args=[self.experience.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "edit_experience.html")
+
+    # 20. Editor dapat mengirim form perubahan pengalaman (POST -> 302).
+    def test_editor_can_post_edit_experience(self):
+        self.client.force_login(self.editor_user)
+        data = {
+            "title": "Diedit oleh Editor",
+            "description": "Deskripsi hasil editan editor.",
+            "category": "research",
+            "thumbnail": "",
+            "ended_at": "",
+        }
+        response = self.client.post(
+            reverse("main:edit_experience", args=[self.experience.id]), data
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("main:show_experience"))
+        self.experience.refresh_from_db()
+        self.assertEqual(self.experience.title, "Diedit oleh Editor")
+
+    # 21. Editor TIDAK dapat membuat pengalaman baru (403).
+    def test_editor_cannot_create_experience(self):
+        self.client.force_login(self.editor_user)
+        res_get = self.client.get(reverse("main:create_experience"))
+        self.assertEqual(res_get.status_code, 403)
+
+        res_post = self.client.post(
+            reverse("main:create_experience"),
+            {"title": "Coba Buat", "description": "Tes", "category": "internship"},
+        )
+        self.assertEqual(res_post.status_code, 403)
+
+    # 22. Editor TIDAK dapat menghapus pengalaman (403).
+    def test_editor_cannot_delete_experience(self):
+        self.client.force_login(self.editor_user)
+        response = self.client.get(
+            reverse("main:delete_experience", args=[self.experience.id])
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Experience.objects.filter(pk=self.experience.id).exists())
+
+    # 23. Halaman experience menampilkan tombol Edit untuk Editor.
+    def test_experience_page_shows_edit_for_editor(self):
+        self.client.force_login(self.editor_user)
+        response = self.client.get(reverse("main:show_experience"))
+        self.assertEqual(response.status_code, 200)
+        edit_url = reverse("main:edit_experience", args=[self.experience.id])
+        self.assertContains(response, f'href="{edit_url}"')
+
+    # 24. Halaman experience menyembunyikan tombol Hapus untuk Editor.
+    def test_experience_page_hides_delete_for_editor(self):
+        self.client.force_login(self.editor_user)
+        response = self.client.get(reverse("main:show_experience"))
+        delete_url = reverse("main:delete_experience", args=[self.experience.id])
+        self.assertNotContains(response, f'href="{delete_url}"')
+
+    # 25. Halaman experience menyembunyikan tombol Tambah untuk Editor.
+    def test_experience_page_hides_add_for_editor(self):
+        self.client.force_login(self.editor_user)
+        response = self.client.get(reverse("main:show_experience"))
+        create_url = reverse("main:create_experience")
+        self.assertNotContains(response, f'href="{create_url}"')
+
+    # 26. Endpoint JSON aman: tidak membocorkan password/email dan memakai natural key.
+    def test_json_endpoint_does_not_leak_sensitive_data(self):
+        self.experience.starred_by.add(self.regular_user)
+        response = self.client.get(reverse("main:get_experience_json"))
+        self.assertEqual(response.status_code, 200)
+        raw_text = response.content.decode("utf-8")
+        self.assertNotIn("regularpassword", raw_text)
+        self.assertNotIn("regular@example.com", raw_text)
+        data = response.json()
+        self.assertEqual(data[0]["fields"]["starred_by"], [["regularuser"]])
 
 
 class SkillTest(TestCase):

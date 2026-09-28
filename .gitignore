@@ -123,3 +123,7 @@ sftp-config.json
 
 # Assignment spec (local only)
 tugas-2.md
+
+# Implementation plans (local only)
+tugas-*.md
+*-plan.md

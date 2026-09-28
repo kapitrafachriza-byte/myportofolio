@@ -60,10 +60,12 @@
                     <div class="experience-footer">
                         {% include "components/experience_star.html" with experience=experience %}
 
-                        {% if user.is_superuser %}
+                        {% if user.is_superuser or is_editor %}
                         <div class="experience-actions">
                             <a href="{% url 'main:edit_experience' experience.id %}" class="btn-edit">Edit</a>
+                            {% if user.is_superuser %}
                             <a href="{% url 'main:delete_experience' experience.id %}" class="btn-delete">Hapus</a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>

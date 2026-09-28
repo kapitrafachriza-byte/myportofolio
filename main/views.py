@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 
 from main.forms import ExperienceForm
 from main.models import Experience, Skill
+from main.utils import is_editor, can_edit, can_create_or_delete
 
 
 def show_main(request):
@@ -65,6 +66,7 @@ def show_experience(request):
         "name": "Kapitra Fachriza Utomo",
         "experience_list": experience_list,
         "filter_query": filter_query,
+        "is_editor": is_editor(request.user),
     }
     return render(request, "experience.html", context)
 
@@ -95,7 +97,7 @@ def show_skills(request):
 
 @login_required(login_url="/login/")
 def create_experience(request):
-    if not request.user.is_superuser:
+    if not can_create_or_delete(request.user):
         raise PermissionDenied
 
     form = ExperienceForm(request.POST or None)
@@ -123,7 +125,7 @@ def get_experience_json(request):
 
 @login_required(login_url="/login/")
 def edit_experience(request, id):
-    if not request.user.is_superuser:
+    if not can_edit(request.user):
         raise PermissionDenied
 
     experience = get_object_or_404(Experience, pk=id)
@@ -139,7 +141,7 @@ def edit_experience(request, id):
 
 @login_required(login_url="/login/")
 def delete_experience(request, id):
-    if not request.user.is_superuser:
+    if not can_create_or_delete(request.user):
         raise PermissionDenied
 
     experience = get_object_or_404(Experience, pk=id)
