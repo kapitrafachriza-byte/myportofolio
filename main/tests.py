@@ -280,6 +280,82 @@ class MainTest(TestCase):
         data = response.json()
         self.assertEqual(data[0]["fields"]["starred_by"], [["regularuser"]])
 
+    # 27. ExperienceForm menghapus tag HTML dengan strip_tags pada title dan description.
+    def test_form_strips_html_tags(self):
+        from main.forms import ExperienceForm
+        form = ExperienceForm(
+            data={
+                "title": "Halo <b>Dunia</b>",
+                "description": "Belajar <script>alert(1)</script>Django",
+                "category": "internship",
+            }
+        )
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["title"], "Halo Dunia")
+        self.assertEqual(form.cleaned_data["description"], "Belajar alert(1)Django")
+
+    # 28. ExperienceForm menolak title yang hanya berisi tag HTML (XSS payload).
+    def test_form_rejects_html_only_title(self):
+        from main.forms import ExperienceForm
+        form = ExperienceForm(
+            data={
+                "title": '<img src="x" onerror="alert(\'XSS!\')">',
+                "description": "Deskripsi valid",
+                "category": "internship",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("title", form.errors)
+
+    # 29. Superuser dapat menambahkan pengalaman lewat endpoint AJAX POST (201).
+    def test_create_experience_ajax_success(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {
+                "title": "Backend Engineer via AJAX",
+                "description": "Membangun endpoint asinkron.",
+                "category": "full-time",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["status"], "success")
+        self.assertTrue(
+            Experience.objects.filter(title="Backend Engineer via AJAX").exists()
+        )
+
+    # 30. Endpoint AJAX menolak payload XSS yang menghasilkan judul kosong (400).
+    def test_create_experience_ajax_invalid_xss_payload(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {
+                "title": '<img src="x" onerror="alert(\'XSS!\')">',
+                "description": "Tes XSS",
+                "category": "internship",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertIn("title", response.json()["errors"])
+
+    # 31. Editor dan pengguna biasa ditolak (403) saat mengakses create_experience_ajax.
+    def test_create_experience_ajax_forbidden_for_non_superuser(self):
+        self.client.force_login(self.editor_user)
+        res_editor = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {"title": "Coba AJAX", "description": "Tes", "category": "internship"},
+        )
+        self.assertEqual(res_editor.status_code, 403)
+
+        self.client.force_login(self.regular_user)
+        res_regular = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {"title": "Coba AJAX", "description": "Tes", "category": "internship"},
+        )
+        self.assertEqual(res_regular.status_code, 403)
+
+
 
 class SkillTest(TestCase):
 

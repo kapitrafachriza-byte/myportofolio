@@ -1,10 +1,11 @@
 import json
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core import serializers
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
 
 from main.forms import ExperienceForm
 from main.models import Experience, Skill
@@ -158,6 +159,30 @@ def toggle_star(request, experience_id):
         else:
             experience.starred_by.add(request.user)
     return redirect("main:show_experience")
+
+
+@login_required(login_url="/login/")
+@require_POST
+def create_experience_ajax(request):
+    if not can_create_or_delete(request.user):
+        raise PermissionDenied
+
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "Pengalaman berhasil ditambahkan.",
+                "id": str(experience.id),
+            },
+            status=201,
+        )
+    return JsonResponse(
+        {"status": "error", "errors": form.errors},
+        status=400,
+    )
+
 
 
 

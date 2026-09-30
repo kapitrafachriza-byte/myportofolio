@@ -14,17 +14,18 @@
                     <h1>Experience</h1>
                 </div>
                 {% if user.is_superuser %}
-                <a href="{% url 'main:create_experience' %}" class="btn-add-experience-link">
-                    <button class="btn-add-experience">+ Tambah Pengalaman</button>
+                <a href="{% url 'main:create_experience' %}" class="btn-add-experience-link" id="open-experience-modal">
+                    <button type="button" class="btn-add-experience">+ Tambah Pengalaman</button>
                 </a>
                 {% endif %}
             </div>
 
-            <!-- Formulir Pencarian (Data Delivery Filter) -->
-            <form method="GET" action="" class="search-form">
+            <!-- Formulir Pencarian (Data Delivery Filter & AJAX) -->
+            <form method="GET" action="" class="search-form" id="experience-search-form">
                 <input
                     type="text"
                     name="title"
+                    id="experience-search-input"
                     placeholder="Cari pengalaman berdasarkan judul..."
                     value="{{ filter_query }}"
                     class="search-input"
@@ -35,7 +36,11 @@
                 {% endif %}
             </form>
 
-            <div class="experience-grid">
+            <!-- State Loading & Error untuk AJAX -->
+            <p id="experience-loading" class="empty-state" style="display: none;">Memuat data pengalaman...</p>
+            <p id="experience-error" class="empty-state" style="display: none; color: #c0392b;">Gagal memuat data pengalaman.</p>
+
+            <div class="experience-grid" id="experience-grid">
                 {% for experience in experience_list %}
                 <article class="experience-card">
                     {% if experience.thumbnail %}
@@ -82,5 +87,280 @@
             </div>
         </div>
     </section>
+
+    {% if user.is_superuser %}
+    <!-- Modal Tambah Pengalaman (AJAX) -->
+    <div id="experience-modal" class="modal-overlay" style="display: none;" aria-hidden="true">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="form-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">Tambah Pengalaman Baru</h2>
+                <button type="button" id="close-experience-modal" class="modal-close" aria-label="Tutup">&times;</button>
+            </div>
+            <form id="create-experience-ajax-form" method="POST" action="{% url 'main:create_experience_ajax' %}">
+                {% csrf_token %}
+                <div class="modal-field">
+                    <label for="ajax-title">Title</label>
+                    <input type="text" id="ajax-title" name="title" required maxlength="255" placeholder="Contoh: Software Engineer Intern">
+                </div>
+                <div class="modal-field">
+                    <label for="ajax-category">Category</label>
+                    <select id="ajax-category" name="category">
+                        <option value="internship">Internship</option>
+                        <option value="research">Research</option>
+                        <option value="volunteer">Volunteer</option>
+                        <option value="part-time">Part-Time</option>
+                        <option value="full-time" selected>Full-Time</option>
+                        <option value="freelance">Freelance</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label for="ajax-description">Description</label>
+                    <textarea id="ajax-description" name="description" rows="4" required placeholder="Deskripsikan pengalamanmu..."></textarea>
+                </div>
+                <div class="modal-field">
+                    <label for="ajax-thumbnail">Thumbnail URL (Opsional)</label>
+                    <input type="url" id="ajax-thumbnail" name="thumbnail" placeholder="https://example.com/image.png">
+                </div>
+                <div class="modal-field">
+                    <label for="ajax-ended-at">Ended At (Kosongkan jika masih berlangsung)</label>
+                    <input type="datetime-local" id="ajax-ended-at" name="ended_at">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-experience-modal" class="btn-reset-search">Batal</button>
+                    <button type="submit" class="btn-submit" style="margin-top: 0;">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Container Toast Notification -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
 </main>
+
+<script>
+    const CURRENT_USERNAME = "{{ user.username|escapejs }}";
+    const IS_SUPERUSER = {{ user.is_superuser|yesno:"true,false" }};
+    const IS_EDITOR = {{ is_editor|yesno:"true,false" }};
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    const CATEGORY_LABELS = {
+        "internship": "Internship",
+        "research": "Research",
+        "volunteer": "Volunteer",
+        "part-time": "Part-Time",
+        "full-time": "Full-Time",
+        "freelance": "Freelance"
+    };
+
+    function escapeHtml(unsafe) {
+        return String(unsafe ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function showToast(title, message, type = "success") {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+        toast.className = `toast toast-${type}`;
+
+        const titleEl = document.createElement("strong");
+        titleEl.className = "toast-title";
+        titleEl.textContent = title;
+
+        const messageEl = document.createElement("p");
+        messageEl.className = "toast-message";
+        messageEl.textContent = message;
+
+        toast.appendChild(titleEl);
+        toast.appendChild(messageEl);
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add("toast-hide");
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    function buildExperienceCardElement(item) {
+        const fields = item.fields || item;
+        const id = item.pk || item.id;
+        const rawStarred = fields.starred_by || [];
+        const starredUsernames = rawStarred.map(u => Array.isArray(u) ? u[0] : u);
+        const starCount = starredUsernames.length;
+        const isStarred = CURRENT_USERNAME && starredUsernames.includes(CURRENT_USERNAME);
+        const starredByNames = starredUsernames.join(", ");
+
+        const imageHtml = fields.thumbnail
+            ? `<div class="experience-thumbnail"><img src="${escapeHtml(fields.thumbnail)}" alt="Gambar ${escapeHtml(fields.title)}"></div>`
+            : '';
+
+        const categoryDisplay = CATEGORY_LABELS[fields.category] || fields.category || '';
+        const statusText = fields.ended_at ? 'Selesai' : 'Sedang berlangsung';
+
+        const starTitle = starCount > 0
+            ? `Dibintangi oleh ${escapeHtml(starredByNames)}`
+            : 'Belum ada yang membintangi';
+
+        const starHtml = `
+            <form method="post" action="/experience/${escapeHtml(id)}/star/" class="star-form">
+                <input type="hidden" name="csrfmiddlewaretoken" value="${escapeHtml(CSRF_TOKEN)}">
+                <button type="submit"
+                    class="button button-star${isStarred ? ' is-starred' : ''}"
+                    title="${starTitle}">
+                    <span aria-hidden="true">★</span>
+                    ${isStarred ? 'Unstar' : 'Star'}
+                    <span class="star-count">${starCount}</span>
+                </button>
+            </form>
+        `;
+
+        let actionsHtml = '';
+        if (IS_SUPERUSER || IS_EDITOR) {
+            const deleteBtnHtml = IS_SUPERUSER
+                ? `<a href="/delete-experience/${escapeHtml(id)}/" class="btn-delete">Hapus</a>`
+                : '';
+            actionsHtml = `
+                <div class="experience-actions">
+                    <a href="/edit-experience/${escapeHtml(id)}/" class="btn-edit">Edit</a>
+                    ${deleteBtnHtml}
+                </div>
+            `;
+        }
+
+        const article = document.createElement("article");
+        article.className = "experience-card";
+        article.innerHTML = `
+            ${imageHtml}
+            <span class="experience-category">${escapeHtml(categoryDisplay)}</span>
+            <h2>${escapeHtml(fields.title)}</h2>
+            <p class="experience-description">${escapeHtml(fields.description)}</p>
+            <p class="experience-status">${escapeHtml(statusText)}</p>
+            <div class="experience-footer">
+                ${starHtml}
+                ${actionsHtml}
+            </div>
+        `;
+        return article;
+    }
+
+    async function fetchExperiences(query = "") {
+        const grid = document.getElementById("experience-grid");
+        const loadingEl = document.getElementById("experience-loading");
+        const errorEl = document.getElementById("experience-error");
+        if (!grid) return;
+
+        if (loadingEl) loadingEl.style.display = "block";
+        if (errorEl) errorEl.style.display = "none";
+
+        try {
+            const url = query
+                ? `{% url 'main:get_experience_json' %}?title=${encodeURIComponent(query)}`
+                : `{% url 'main:get_experience_json' %}`;
+            const response = await fetch(url, {
+                headers: { "Accept": "application/json" }
+            });
+            if (!response.ok) throw new Error("Gagal mengambil data");
+
+            const data = await response.json();
+            grid.innerHTML = "";
+
+            if (data.length === 0) {
+                const emptyP = document.createElement("p");
+                emptyP.className = "empty-state";
+                emptyP.textContent = query
+                    ? `Tidak ada pengalaman yang cocok dengan pencarian "${query}".`
+                    : "Belum ada pengalaman yang ditambahkan.";
+                grid.appendChild(emptyP);
+            } else {
+                data.forEach(item => {
+                    grid.appendChild(buildExperienceCardElement(item));
+                });
+            }
+        } catch (err) {
+            if (errorEl) errorEl.style.display = "block";
+        } finally {
+            if (loadingEl) loadingEl.style.display = "none";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById("experience-modal");
+        const openBtn = document.getElementById("open-experience-modal");
+        const closeBtn = document.getElementById("close-experience-modal");
+        const cancelBtn = document.getElementById("cancel-experience-modal");
+        const ajaxForm = document.getElementById("create-experience-ajax-form");
+        const searchForm = document.getElementById("experience-search-form");
+        const searchInput = document.getElementById("experience-search-input");
+
+        function openModal() {
+            if (!modal) return;
+            modal.style.display = "flex";
+            modal.setAttribute("aria-hidden", "false");
+        }
+
+        function closeModal() {
+            if (!modal) return;
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+            if (ajaxForm) ajaxForm.reset();
+        }
+
+        if (openBtn && modal) {
+            openBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                openModal();
+            });
+        }
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
+        if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+        if (modal) {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        if (searchForm && searchInput) {
+            searchForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                fetchExperiences(searchInput.value.trim());
+            });
+        }
+
+        if (ajaxForm) {
+            ajaxForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = new FormData(ajaxForm);
+                try {
+                    const response = await fetch(ajaxForm.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-CSRFToken": CSRF_TOKEN
+                        }
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.status === "success") {
+                        closeModal();
+                        await fetchExperiences(searchInput ? searchInput.value.trim() : "");
+                        showToast("Berhasil!", result.message || "Pengalaman berhasil ditambahkan.", "success");
+                    } else {
+                        let errorMessages = "Gagal menambahkan pengalaman.";
+                        if (result.errors) {
+                            errorMessages = Object.values(result.errors).flat().join(" ");
+                        }
+                        showToast("Validasi Gagal", errorMessages, "error");
+                    }
+                } catch (err) {
+                    showToast("Error", "Terjadi kesalahan jaringan saat menyimpan data.", "error");
+                }
+            });
+        }
+    });
+</script>
 {% endblock content %}
