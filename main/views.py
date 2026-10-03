@@ -62,11 +62,14 @@ def show_experience(request):
         experience_list.append(fields)
 
     filter_query = request.GET.get("title", "")
+    category_query = request.GET.get("category", "")
 
     context = {
         "name": "Kapitra Fachriza Utomo",
         "experience_list": experience_list,
         "filter_query": filter_query,
+        "selected_category": category_query,
+        "category_choices": Experience.EXPERIENCE_CHOICES,
         "is_editor": is_editor(request.user),
     }
     return render(request, "experience.html", context)
@@ -112,16 +115,47 @@ def create_experience(request):
 
 
 def get_experience_json(request):
-    title_query = request.GET.get("title", "")
-    experiences = Experience.objects.all()
+    title_query = request.GET.get("title", "").strip()
+    category_query = request.GET.get("category", "").strip()
+    experiences = Experience.objects.prefetch_related("starred_by").all()
 
     if title_query:
         experiences = experiences.filter(title__icontains=title_query)
+    if category_query:
+        experiences = experiences.filter(category=category_query)
 
-    experience_data = serializers.serialize(
-        "json", experiences, use_natural_foreign_keys=True
-    )
-    return HttpResponse(experience_data, content_type="application/json")
+    data = []
+    for exp in experiences:
+        starred_usernames = [u.username for u in exp.starred_by.all()]
+        is_starred = (
+            request.user.username in starred_usernames
+            if request.user.is_authenticated
+            else False
+        )
+        item_fields = {
+            "title": exp.title,
+            "description": exp.description,
+            "category": exp.category,
+            "category_display": exp.get_category_display(),
+            "thumbnail": exp.thumbnail or "",
+            "started_at": exp.started_at.isoformat() if exp.started_at else None,
+            "ended_at": exp.ended_at.isoformat() if exp.ended_at else None,
+            "is_ongoing": exp.is_ongoing,
+            "star_count": len(starred_usernames),
+            "is_starred": is_starred,
+            "starred_by": [[u] for u in starred_usernames],
+            "starred_by_names": ", ".join(starred_usernames),
+        }
+        item_dict = {
+            "id": str(exp.id),
+            "pk": str(exp.id),
+            "model": "main.experience",
+            "fields": item_fields,
+            **item_fields,
+        }
+        data.append(item_dict)
+
+    return JsonResponse(data, safe=False)
 
 
 @login_required(login_url="/login/")
@@ -156,8 +190,27 @@ def toggle_star(request, experience_id):
     if request.method == "POST":
         if request.user in experience.starred_by.all():
             experience.starred_by.remove(request.user)
+            is_starred = False
         else:
             experience.starred_by.add(request.user)
+            is_starred = True
+
+        # Respons JSON jika dipanggil melalui AJAX
+        is_ajax = (
+            request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or "application/json" in request.headers.get("accept", "")
+            or request.content_type == "application/json"
+        )
+        if is_ajax:
+            starred_usernames = [u.username for u in experience.starred_by.all()]
+            return JsonResponse({
+                "status": "success",
+                "is_starred": is_starred,
+                "star_count": len(starred_usernames),
+                "starred_by_names": ", ".join(starred_usernames),
+                "message": "Berhasil membatalkan star." if not is_starred else "Berhasil memberikan star.",
+            })
+
     return redirect("main:show_experience")
 
 

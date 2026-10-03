@@ -355,6 +355,47 @@ class MainTest(TestCase):
         )
         self.assertEqual(res_regular.status_code, 403)
 
+    # 32. Endpoint get_experience_json mengembalikan struktur manual dengan informasi star dan filter kategori.
+    def test_get_experience_json_manual_structure_and_category_filter(self):
+        self.experience.starred_by.add(self.regular_user)
+        self.client.force_login(self.regular_user)
+
+        # Uji pemanggilan tanpa filter
+        response = self.client.get(reverse("main:get_experience_json"))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertGreater(len(data), 0)
+        item = data[0]
+        self.assertEqual(item["star_count"], 1)
+        self.assertTrue(item["is_starred"])
+        self.assertEqual(item["starred_by_names"], "regularuser")
+        self.assertEqual(item["category_display"], "Part-Time")
+
+        # Uji filter kategori cocok
+        res_cat = self.client.get(f"{reverse('main:get_experience_json')}?category=part-time")
+        self.assertEqual(res_cat.status_code, 200)
+        self.assertEqual(len(res_cat.json()), 1)
+
+        # Uji filter kategori tidak cocok
+        res_empty = self.client.get(f"{reverse('main:get_experience_json')}?category=internship")
+        self.assertEqual(res_empty.status_code, 200)
+        self.assertEqual(len(res_empty.json()), 0)
+
+    # 33. View toggle_star mengembalikan JsonResponse saat dipanggil via AJAX.
+    def test_toggle_star_ajax_returns_json(self):
+        self.client.force_login(self.regular_user)
+        response = self.client.post(
+            reverse("main:toggle_star", args=[self.experience.id]),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["content-type"], "application/json")
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertTrue(data["is_starred"])
+        self.assertEqual(data["star_count"], 1)
+        self.assertEqual(data["starred_by_names"], "regularuser")
+
 
 
 class SkillTest(TestCase):

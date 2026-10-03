@@ -198,4 +198,77 @@ Pada tutorial ini, saya mempelajari dan mengimplementasikan konsep utama pengemb
      - Objek model Django (`QuerySet` atau instance kelas model) adalah **objek Python internal yang kompleks dan hidup di dalam memori (*in-memory Python objects*)**. Objek ini memiliki method, metadata internal, serta referensi relasi yang tidak dapat langsung dipahami atau ditransmisikan melalui protokol HTTP ke klien eksternal.
      - Protokol HTTP dan format JSON hanya dapat memproses dan mentransfer data berbasis teks dengan struktur data universal (string, number, boolean, array, object).
      - Oleh karena itu, **serialisasi (*serialization*)** wajib dilakukan untuk mengonversi objek kompleks Python/Django ORM tersebut menjadi format representasi data standar (string JSON) yang netral-platform, sehingga dapat dikirimkan melalui jaringan dan mudah diolah kembali (*deserialized*) oleh klien apa pun (baik JavaScript di browser, aplikasi mobile, maupun sistem lain).
-
+
+
+
+---
+
+## Tugas 4: Autentikasi, Cookie, & Otorisasi
+
+Pada tugas ini, sistem autentikasi dan otorisasi multi-peran diterapkan pada modul **Experience**:
+1. **Autentikasi Pengguna**: Fitur Registrasi, Login, dan Logout menggunakan form bawaan Django.
+2. **Sesi & Cookie**: Menyimpan dan menampilkan waktu login terakhir pengguna melalui cookie `last_login`.
+3. **Sistem Peran & Otorisasi 4-Level**:
+   - **Pengunjung tanpa login**: Hanya dapat membaca data portofolio.
+   - **Pengguna biasa**: Dapat membaca data dan memberi/membatalkan star pada pengalaman.
+   - **Editor (Grup 'Editor')**: Memiliki hak pengguna biasa dan dapat mengubah (*edit*) data pengalaman, namun tidak dapat membuat atau menghapus.
+   - **Pemilik Portofolio (Superuser)**: Memiliki hak penuh (membuat, mengubah, dan menghapus pengalaman).
+4. **Interaktivitas Star**: Relasi `ManyToManyField` ke `User` pada model `Experience` dengan tombol toggle star.
+
+---
+
+## Tugas 5: Web Interactivity with JavaScript
+
+### Pertanyaan Reflektif
+
+1. **Jelaskan apa itu *debouncing* dan mengapa teknik ini penting diterapkan pada fitur pencarian yang menggunakan AJAX!**
+
+   - **Pengertian Debouncing**:
+     *Debouncing* adalah teknik optimasi pemrograman yang menunda pemanggilan suatu fungsi hingga pengguna berhenti melakukan aksi selama periode waktu tertentu (misalnya 300 milidetik). Jika aksi baru terjadi sebelum batas waktu berakhir, penghitung waktu (*timer*) sebelumnya akan dibatalkan (`clearTimeout`) dan dihitung ulang dari awal.
+   - **Pentingnya Debouncing pada Pencarian AJAX**:
+     - **Mencegah Banjir Permintaan HTTP (*Request Flooding*)**: Tanpa *debouncing*, setiap penekanan tombol (*keystroke*) pada kolom pencarian akan langsung memicu `fetch()` ke server. Jika pengguna mengetik kata `"Software"` (8 karakter), browser akan mengirimkan 8 permintaan HTTP berturut-turut. Dengan *debouncing*, permintaan hanya dikirim 1 kali setelah pengguna selesai mengetik seluruh kata.
+     - **Mengurangi Beban Server & Basis Data**: Setiap permintaan pencarian memicu eksekusi query ke database (`filter(title__icontains=...)`). Mengurangi jumlah request secara drastis menghemat kapasitas pemrosesan CPU server dan I/O database.
+     - **Menghindari Kondisi Perlombaan (*Race Condition*)**: Karena kecepatan respons jaringan bervariasi, respons dari huruf pertama (`"S"`) bisa saja tiba lebih lambat dibandingkan respons kata lengkap (`"Software"`). Tanpa debouncing, hasil pencarian di layar bisa tertimpa oleh data usang (*stale data*).
+
+2. **Jelaskan fungsi dari penggunaan `await` ketika kita menggunakan `fetch()`! Apa yang akan terjadi jika kita tidak menggunakan `await`?**
+
+   - **Fungsi `await` pada `fetch()`**:
+     Operasi `fetch()` berjalan secara asinkron di latar belakang jaringan dan mengembalikan sebuah objek `Promise` (yang merepresentasikan operasi yang sedang berjalan). Kata kunci `await` berfungsi untuk **menjeda eksekusi baris kode berikutnya di dalam fungsi `async`** sampai `Promise` tersebut selesai (*resolved*) dan menghasilkan objek `Response` yang sesungguhnya. Hal serupa juga berlaku saat membaca *body stream* dengan `await response.json()`.
+   - **Apa yang terjadi jika kita TIDAK menggunakan `await`?**:
+     - Variabel yang menampung hasil `fetch()` tidak akan berisi objek `Response`, melainkan objek `Promise { <pending> }`.
+     - Ketika kode langsung mencoba mengakses properti atau method respons seperti `response.ok` atau `response.json()`, program akan mengalami galat (*runtime error*), seperti `response.json is not a function` atau mengembalikan Promise lain yang belum selesai.
+     - Akibatnya, data JSON belum tersedia saat antarmuka hendak me-render kartu ke DOM, sehingga data tidak tampil atau program terhenti karena error.
+
+3. **Jelaskan apa itu serangan XSS (*Cross-Site Scripting*) dan mengapa data yang ditampilkan melalui AJAX/JavaScript lebih rentan terhadap serangan ini daripada data yang ditampilkan langsung melalui template Django!**
+
+   - **Pengertian Serangan XSS (*Cross-Site Scripting*)**:
+     XSS adalah kerentanan keamanan di mana penyerang (*attacker*) berhasil menyisipkan skrip berbahaya (biasanya JavaScript) ke dalam konten aplikasi web. Ketika pengguna lain membuka halaman yang memuat data tersebut, skrip berbahaya akan dieksekusi secara otomatis oleh browser pengguna lain tersebut. Dampaknya meliputi pencurian cookie sesi / token autentikasi, pembajakan akun (*account hijacking*), manipulasi tampilan halaman (*defacement*), atau pengalihan pengguna ke situs berbahaya (*phishing*).
+   - **Mengapa Data via AJAX/JavaScript Lebih Rentan Dibandingkan Template Django?**:
+     - **Perlindungan Bawaan Template Django (*Auto-Escaping*)**: Django Template Language (DTL) secara bawaan memiliki fitur **Automatic HTML Escaping**. Setiap variabel yang dicetak dengan sintaks `{{ variabel }}` akan otomatis disanitasi: karakter khusus seperti `<`, `>`, `&`, `"`, dan `'` diubah menjadi entitas HTML (`&lt;`, `&gt;`, dll.). Tag `<script>` atau `<img src="x" onerror="...">` akan ditampilkan sebagai teks biasa tanpa dieksekusi oleh browser, kecuali jika developer secara eksplisit menggunakan filter `|safe`.
+     - **Ketiadaan Auto-Escaping pada DOM Manipulation JavaScript**: Ketika data diambil melalui AJAX dalam bentuk string JSON murni dan disisipkan langsung ke antarmuka web menggunakan properti seperti `element.innerHTML = ...` atau template literals (`` `${item.title}` ``), JavaScript **tidak memiliki mekanisme sanitasi otomatis**. Browser akan langsung mem-parsing string tersebut sebagai elemen HTML. Jika nilai `title` berisi `<img src="x" onerror="alert('XSS!')">`, event handler `onerror` akan langsung dieksekusi oleh browser saat render terjadi.
+     - **Lapisan Pertahanan yang Diterapkan**:
+       1. **Client-side Escaping**: Membungkus setiap nilai teks dari JSON dengan fungsi `escapeHtml()` sebelum dirangkai ke dalam `innerHTML`, atau menggunakan properti `textContent` yang tidak pernah mengeksekusi tag HTML.
+       2. **Server-side Sanitization**: Menggunakan fungsi `strip_tags()` pada method `clean_<field>` di `ModelForm` untuk membuang tag HTML berbahaya sejak data masuk ke server.
+
+---
+
+### AI Disclosure (Tugas 5)
+
+Saya menggunakan **Google Antigravity (Gemini 3.8 Flash HIGH dan Opus 5.5)** sebagai asisten *pair-programming*.
+
+**Tools & Fitur yang Digunakan:**
+- Antigravity Coding Assistant untuk pembuatan boilerplate kode asinkron, modularisasi utilitas `toast.js`, dan penulisan test cases.
+
+**Bagian yang Dibantu AI (Gemini 3.8):**
+- Penyusunan template modal form dan styling dialog CRT.
+- Implementasi fungsi `getCookie()` dan `escapeHtml()` pada berkas `static/js/toast.js`.
+- Penulisan unit tests tambahan di `main/tests.py` untuk menguji sanitasi XSS, endpoint AJAX POST, respons manual JSON, dan toggle star AJAX.
+
+**Bagian yang Dibantu AI (Opus 5.5)**:
+- Audit test dalam kode yang sudah ada.
+
+**Bagian yang Saya Kerjakan / Verifikasi Sendiri:**
+- Analisis kesesuaian arsitektur sistem otorisasi multi-peran (Pengunjung, Pengguna Biasa, Editor, Superuser) pada endpoint AJAX.
+- Konseptualisasi integrasi AJAX Star Toggle tanpa reload halaman.
+- Peninjauan, eksekusi, dan verifikasi seluruh 36 unit tests di lingkungan lokal.
+- Penyusunan jawaban reflektif mendalam mengenai debouncing, asinkronitas JavaScript, dan keamanan XSS.
