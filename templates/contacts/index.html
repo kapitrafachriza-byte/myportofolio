@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacts - Tutorial 06 HTMX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js"></script>
+  <style>
+    .htmx-indicator {
+      display: none;
+    }
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+      display: inline-flex;
+    }
+  </style>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="bg-slate-100 min-h-screen text-slate-800 antialiased p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header & Navigation -->
+    <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Daftar Kontak</h1>
+        <p class="text-sm text-slate-500 mt-1">Tutorial 06: Single-Page Contact Manager with HTMX</p>
+      </div>
+      <a href="{% url 'main:show_main' %}" class="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm transition">
+        &larr; Kembali ke Portfolio
+      </a>
+    </div>
+
+    <!-- Tambah Kontak Form Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Tambah Kontak</h2>
+      <form hx-post="{% url 'contacts:contact_add' %}"
+            hx-target="#contact-rows"
+            hx-swap="innerHTML"
+            hx-on::after-request="if (event.detail.successful) this.reset()"
+            class="flex flex-col sm:flex-row gap-3">
+        {% csrf_token %}
+        <input type="text"
+               name="name"
+               placeholder="Nama"
+               required
+               class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        <input type="email"
+               name="email"
+               placeholder="Email"
+               required
+               class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        <button type="submit"
+                class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+          Tambah
+        </button>
+      </form>
+    </div>
+
+    <!-- Live Search & Contacts Table Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="relative flex-1 max-w-md">
+          <input type="search"
+                 name="q"
+                 placeholder="Cari kontak..."
+                 hx-get="{% url 'contacts:contact_search' %}"
+                 hx-trigger="keyup changed delay:300ms, search"
+                 hx-target="#contact-rows"
+                 hx-indicator="#search-indicator"
+                 class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="search-indicator" class="htmx-indicator items-center space-x-2 text-xs text-indigo-600 font-medium">
+            <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span>Mencari...</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600">
+              <th class="px-6 py-3">Nama</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="contact-rows" class="divide-y divide-slate-100">
+            {% include "contacts/_contact_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<tr id="contact-{{ contact.id }}" class="hover:bg-slate-50 transition border-b border-slate-200">
+  <td class="px-6 py-4 text-sm font-medium text-slate-900">{{ contact.name }}</td>
+  <td class="px-6 py-4 text-sm text-slate-600">{{ contact.email }}</td>
+  <td class="px-6 py-4 text-sm text-right space-x-2 whitespace-nowrap">
+    <button hx-get="{% url 'contacts:contact_edit' contact.id %}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            class="inline-flex items-center px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+      Edit
+    </button>
+    <button hx-delete="{% url 'contacts:contact_delete' contact.id %}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            hx-confirm="Yakin hapus {{ contact.name }}?"
+            class="inline-flex items-center px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+      Hapus
+    </button>
+  </td>
+</tr>

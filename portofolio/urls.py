@@ -21,6 +21,7 @@ from portofolio.views import register, login_user, logout_user
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
+    path('contacts/', include('contacts.urls')),
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
