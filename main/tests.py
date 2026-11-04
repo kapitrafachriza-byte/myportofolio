@@ -425,3 +425,25 @@ class SkillTest(TestCase):
         Skill.objects.all().delete()
         response = self.client.get(reverse("main:show_skills"))
         self.assertContains(response, "Belum ada skill yang ditambahkan.")
+
+
+
+class ProjectViewTest(TestCase):
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username="adminuser2", password="adminpassword", email="admin2@example.com"
+        )
+
+    def test_show_projects_accessible(self):
+        response = self.client.get(reverse("main:show_projects"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "project.html")
+        self.assertContains(response, "Projects")
+        self.assertContains(response, 'id="project-search-form"')
+
+    def test_show_projects_modal_for_superuser(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(reverse("main:show_projects"))
+        self.assertContains(response, "Tambah Proyek")
+        self.assertContains(response, 'id="add-project-modal"')

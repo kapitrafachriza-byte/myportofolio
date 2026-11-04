@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.html import strip_tags
-from main.models import Experience
+from main.models import Experience, Project
 
 
 class ExperienceForm(ModelForm):
@@ -21,3 +21,20 @@ class ExperienceForm(ModelForm):
             raise ValidationError("Deskripsi tidak boleh hanya berisi tag HTML.")
         return description
 
+
+class ProjectForm(ModelForm):
+    class Meta:
+        model = Project
+        fields = ["title", "description", "tech_stack", "project_url", "project_image_url"]
+
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data.get("title", "")).strip()
+        if not title:
+            raise ValidationError("Title cannot be empty.")
+        return title
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data.get("description", "")).strip()
+
+    def clean_tech_stack(self):
+        return strip_tags(self.cleaned_data.get("tech_stack", "")).strip()

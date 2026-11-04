@@ -7,8 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 
-from main.forms import ExperienceForm
-from main.models import Experience, Skill
+from main.forms import ExperienceForm, ProjectForm
+from main.models import Experience, Skill, Project
 from main.utils import is_editor, can_edit, can_create_or_delete
 
 
@@ -238,4 +238,13 @@ def create_experience_ajax(request):
 
 
 
-
+
+
+
+
+def show_projects(request):
+    context = {
+        "name": "Kapitra Fachriza Utomo",
+        "form": ProjectForm(),
+    }
+    return render(request, "project.html", context)

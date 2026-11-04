@@ -1,9 +1,10 @@
 from django.urls import path
-
+from portofolio.views import login_user
 from main.views import (
     show_main,
     show_experience,
     show_skills,
+    show_projects,
     create_experience,
     create_experience_ajax,
     get_experience_json,
@@ -19,10 +20,11 @@ urlpatterns = [
     path("experience/", show_experience, name="show_experience"),
     path("experience/json/", get_experience_json, name="get_experience_json"),
     path("skills/", show_skills, name="show_skills"),
+    path("projects/", show_projects, name="show_projects"),
     path("create-experience/", create_experience, name="create_experience"),
     path("create-experience-ajax/", create_experience_ajax, name="create_experience_ajax"),
     path("edit-experience/<uuid:id>/", edit_experience, name="edit_experience"),
     path("delete-experience/<uuid:id>/", delete_experience, name="delete_experience"),
     path("experience/<uuid:experience_id>/star/", toggle_star, name="toggle_star"),
+    path("login/", login_user, name="login"),
 ]
-
