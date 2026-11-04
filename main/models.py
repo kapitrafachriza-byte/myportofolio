@@ -53,3 +53,18 @@ class Skill(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
+
+
+class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    tech_stack = models.CharField(max_length=255)
+    project_url = models.URLField(blank=True)
+    project_image_url = models.URLField(blank=True)
+    starred_by = models.ManyToManyField(
+        User, related_name="starred_projects", blank=True
+    )
+
+    def __str__(self):
+        return self.title
