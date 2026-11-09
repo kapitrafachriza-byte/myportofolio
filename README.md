@@ -272,3 +272,100 @@ Saya menggunakan **Google Antigravity (Gemini 3.8 Flash HIGH dan Opus 5.5)** seb
 - Konseptualisasi integrasi AJAX Star Toggle tanpa reload halaman.
 - Peninjauan, eksekusi, dan verifikasi seluruh 36 unit tests di lingkungan lokal.
 - Penyusunan jawaban reflektif mendalam mengenai debouncing, asinkronitas JavaScript, dan keamanan XSS.
+
+
+---
+
+## Tugas 6: Django REST Framework Implementation
+
+### Pertanyaan Reflektif
+
+### Tugas 6
+1. **Jelaskan apa yang dimaksud dengan REST dan mengapa mengembalikan JSON saja belum cukup untuk menyebut sebuah API sebagai RESTful! Jelaskan pula perbedaan `PUT` dan `PATCH` beserta contoh kapan masing-masing sebaiknya digunakan!**
+
+   - **Pengertian REST dan Mengapa Mengembalikan JSON Saja Belum Cukup**:
+     - **REST (Representational State Transfer)** adalah gaya arsitektur perangkat lunak yang diperkenalkan oleh Roy Fielding (2000) untuk memandu perancangan sistem terdistribusi, khususnya World Wide Web. REST mengedepankan prinsip *statelessness*, *client-server separation*, *cacheability*, *layered system*, dan *uniform interface*.
+     - Sebuah API yang semata-mata mengembalikan data dalam format JSON **belum tentu dapat disebut RESTful**. Sebagai contoh, sebuah endpoint RPC seperti `POST /doAction/` yang selalu mengembalikan status HTTP `200 OK` dengan isi payload `{ "status": "error", "message": "not found" }` bukanlah RESTful. Untuk memenuhi kriteria RESTful, API harus memenuhi prinsip arsitektural berikut:
+       1. **Resource-Oriented URI**: Mengidentifikasi sumber daya sebagai entitas kata benda (noun-based), seperti `/api/v1/experiences/`, bukan kata kerja tindakan (verb-based) seperti `/getExperiences` atau `/deleteExperience`.
+       2. **Semantik HTTP Verbs yang Tepat**: Menggunakan metode HTTP standar sesuai fungsinya: `GET` untuk membaca data tanpa efek samping (*safe & idempotent*), `POST` untuk membuat resource baru, `PUT` untuk penggantian resource secara penuh, `PATCH` untuk pembaruan sebagian, dan `DELETE` untuk menghapus resource.
+       3. **Kode Status HTTP Standar**: Mengembalikan kode status HTTP yang mencerminkan hasil eksekusi sebenarnya (`200 OK`, `201 Created`, `204 No Content`, `400 Bad Request`, `403 Forbidden`, `404 Not Found`, `405 Method Not Allowed`).
+       4. **Stateless Communication**: Setiap permintaan HTTP harus membawa seluruh informasi dan konteks yang dibutuhkan server untuk memprosesnya, tanpa bergantung pada state tersembunyi yang disimpan di server antar-request.
+
+   - **Perbedaan `PUT` dan `PATCH` Beserta Contoh Penggunaannya**:
+     - **`PUT` (Full Replacement / Penggantian Utuh)**:
+       - Memperbarui atau mengganti **seluruh** representasi sumber daya target dengan representasi baru yang dikirimkan oleh klien. Jika ada field yang tidak disertakan dalam payload permintaan, field tersebut akan diisi dengan nilai default atau dihapus/dikosongkan (*null*).
+       - Bersifat **idempoten** (*idempotent*): mengeksekusi request `PUT` yang sama satu kali atau berkali-kali akan menghasilkan state data akhir yang persis sama pada server.
+       - *Contoh Penggunaan*: Ketika pengguna mengisi formulir edit lengkap di mana seluruh kolom (`title`, `category`, `description`, `thumbnail`, `ended_at`) dikirim secara menyeluruh dari antarmuka web untuk menggantikan data pengalaman yang lama.
+     - **`PATCH` (Partial Modification / Pembaruan Parsial)**:
+       - Hanya memperbarui **field-field tertentu** yang secara eksplisit dicantumkan dalam payload permintaan, sementara field-field lain yang tidak disertakan tetap mempertahankan nilai lamanya tanpa perubahan.
+       - *Contoh Penggunaan*: Fitur pengeditan cepat in-place atau toggle status, misalnya klien hanya mengirim `{"title": "Senior Software Engineer"}` untuk mengubah judul pengalaman, tanpa perlu menyertakan kembali nilai `description` atau `thumbnail`.
+
+2. **Jelaskan peran serializer pada Django REST Framework! Apa keuntungannya dibandingkan merakit dictionary secara manual dengan `JsonResponse` seperti pada Tutorial 05?**
+
+   - **Peran Serializer pada DRF**:
+     - **Serialisasi (*Serialization*)**: Mengonversi objek kompleks internal Python/Django (seperti instance model atau `QuerySet`) menjadi tipe data Python primitif (dictionary, list, string) yang siap diterjemahkan ke format transmisi standar seperti JSON atau XML.
+     - **Deserialisasi & Validasi (*Deserialization & Validation*)**: Mengurai payload JSON yang masuk dari klien ke tipe data Python, memvalidasi integritas data berdasarkan aturan model dan logika bisnis kustom (`validate_<field>`, `validate`), melakukan sanitasi input (misalnya pembersihan tag HTML via `strip_tags`), serta memfasilitasi penyimpanan data kembali ke database melalui method `save()`, `create()`, atau `update()`.
+
+   - **Keuntungan Serializer Dibandingkan Merakit Dictionary Manual dengan `JsonResponse`**:
+     1. **Validasi Terpusat dan Deklaratif**: Pada `JsonResponse` manual, kita harus menulis pengecekan berulang-ulang untuk tipe data, batasan field, nilai kosong, dan keamanan input. Serializer menangani validasi ini secara deklaratif dan otomatis menghasilkan struktur pesan kesalahan yang terstandarisasi untuk setiap field.
+     2. **Mendukung Alur Dua Arah (Read & Write)**: `JsonResponse` hanya berfungsi satu arah untuk menampilkan data (output). Sebaliknya, Serializer mendukung alur dua arah: mampu membaca data (*read*) sekaligus menerima, memvalidasi, dan menyimpan data baru/pembaruan (*write*) langsung ke model.
+     3. **Keamanan Data & Pencegahan Kebocoran Informasi Sensitif**: Dengan menetapkan `fields` secara eksplisit dan menggunakan `read_only_fields`, serializer menjamin data sensitif (seperti hash password, token, atau email pengguna lain pada fitur star) tidak akan bocor ke klien, serta mencegah kerentanan manipulasi field internal (*mass assignment*).
+     4. **Kalkulasi Field Dinamis yang Rapi**: Fitur `SerializerMethodField` memungkinkan kita menyisipkan informasi terhitung (seperti `star_count`, status `is_starred` sesuai pengguna yang sedang login, dan `category_display`) secara modular dan terisolasi dari kode view.
+     5. **Integrasi Ekosistem DRF & Browsable API**: Serializer langsung terintegrasi dengan antarmuka interaktif Browsable API, pagination, filtering, serta dokumentasi skema OpenAPI/Swagger secara otomatis.
+
+3. **Jelaskan perbedaan autentikasi dan otorisasi pada Django REST Framework! Mengapa hak akses harus diperiksa dengan permission class di server, bukan hanya dengan menyembunyikan tombol di template?**
+
+   - **Perbedaan Autentikasi dan Otorisasi**:
+     - **Autentikasi (*Authentication - "Siapa Anda?"*)**: Proses membuktikan identitas pengguna yang melakukan permintaan. DRF memeriksa kredensial (seperti cookie sesi pada `SessionAuthentication` atau token pada `TokenAuthentication`) dan mengasosiasikan permintaan tersebut dengan objek `request.user` (atau `AnonymousUser` jika gagal/tanpa login).
+     - **Otorisasi (*Authorization / Permission - "Apa yang boleh Anda lakukan?"*)**: Proses menentukan apakah pengguna yang identitasnya telah terverifikasi tersebut memiliki izin atau hak akses untuk melakukan aksi tertentu pada endpoint atau objek data target (misalnya: apakah pengguna diizinkan melakukan operasi `POST`, `PATCH`, atau `DELETE`).
+
+   - **Mengapa Hak Akses Harus Diperiksa dengan Permission Class di Server**:
+     - Mengikuti prinsip dasar keamanan sistem terdistribusi: **"Never trust the client"**.
+     - Menyembunyikan tombol atau tautan pada template HTML hanyalah lapisan kenyamanan antarmuka pengguna (*UI/UX convenience*), dan **bukan mekanisme keamanan sama sekali**.
+     - Pengguna memiliki kendali penuh atas browser dan jaringan mereka:
+       1. Pengguna dapat dengan mudah mengubah atribut DOM lewat *Inspect Element* untuk memunculkan tombol yang disembunyikan.
+       2. Pengguna dapat langsung mengirimkan permintaan HTTP berbahaya menggunakan perkakas seperti cURL, Postman, Fetch API di konsol browser, atau skrip otomatis ke endpoint API (misalnya mengirim request `DELETE /api/v1/experiences/<uuid>/` atau `POST /api/v1/experiences/`).
+     - Jika server tidak memiliki lapisan otorisasi berbasis `permission_classes` di level view/API, permintaan liar tersebut akan langsung dieksekusi oleh database. Memeriksa hak akses di server menjamin bahwa aturan bisnis (seperti Editor dilarang membuat atau menghapus data, dan pengunjung dilarang memodifikasi data) ditegakkan secara absolut, terlepas dari dari mana atau bagaimana permintaan tersebut dikirim.
+
+4. **Jelaskan mengapa permintaan yang mengubah data tetap memerlukan token CSRF ketika API memakai `SessionAuthentication`! Mengapa test yang memakai `force_authenticate` tidak cukup untuk membuktikan bahwa perlindungan CSRF berjalan?**
+
+   - **Mengapa Permintaan yang Mengubah Data Tetap Memerlukan Token CSRF pada `SessionAuthentication`**:
+     - `SessionAuthentication` mengandalkan cookie sesi HTTP (`sessionid`) yang disimpan di browser klien.
+     - Mekanisme bawaan browser secara otomatis menyertakan semua cookie yang relevan saat mengirimkan permintaan HTTP ke suatu domain, **bahkan ketika permintaan tersebut dipicu oleh situs jahat milik pihak ketiga** (misalnya melalui form submission tersembunyi atau skrip lintas-asal).
+     - Tanpa perlindungan CSRF, penyerang dapat mengeksploitasi sesi aktif pengguna yang sedang login untuk memicu aksi yang tidak diinginkan (seperti menghapus atau mengubah portofolio) tanpa sepengetahuan pengguna (*Cross-Site Request Forgery*).
+     - Token CSRF (yang divalidasi via header `X-CSRFToken`) bekerja sebagai bukti rahasia bersama (*shared secret*) bahwa permintaan tersebut memang berasal dari aplikasi kita yang sah, karena situs jahat pihak ketiga tidak dapat membaca atau mencuri token CSRF dari cookie domain kita akibat batasan keamanan *Same-Origin Policy* (SOP).
+
+   - **Mengapa Test dengan `force_authenticate` Tidak Cukup**:
+     - Method `force_authenticate(user=...)` pada DRF adalah helper pengujian yang dirancang khusus untuk mempermudah verifikasi otorisasi/permission view.
+     - Helper ini bekerja dengan **langsung menyuntikkan objek pengguna ke dalam `request.user` secara in-memory**, sehingga **melewati (*bypass*) seluruh alur autentikasi dan middleware Django sesungguhnya**, termasuk `CsrfViewMiddleware` dan pemeriksaan token CSRF.
+     - Akibatnya, pengujian yang memakai `force_authenticate` tidak pernah mengevaluasi apakah token CSRF disertakan, valid, atau bahkan dipaksakan.
+     - Untuk membuktikan secara empiris bahwa perlindungan CSRF benar-benar aktif dan menolak permintaan tanpa token, kita wajib menggunakan `APIClient(enforce_csrf_checks=True)` yang dipadukan dengan `.login()`. Pendekatan ini mensimulasikan sesi browser riil, menghasilkan cookie sesi, dan memicu pemeriksaan middleware CSRF penuh di mana ketiadaan header `X-CSRFToken` akan ditolak dengan status HTTP `403 Forbidden`.
+
+---
+
+### AI Disclosure (Tugas 6)
+
+Saya menggunakan **Google Antigravity (didukung model Gemini 3.8 Flash HIGH dan Opus 5.5)** sebagai asisten *pair-programming* dalam menyelesaikan Individual Assignment 6.
+
+**Tools & Strategi Prompting:**
+- Menggunakan Antigravity Coding Assistant dengan pendekatan berorientasi rencana (*plan-driven development*), membagi tugas menjadi dua tahapan bertahap (*two-stage push*):
+  - **Tahap 1**: Pembangunan arsitektur backend DRF (Serializer, Permissions, API Views berbasis fungsi, URL routing, dan unit testing komprehensif 13 test cases).
+  - **Tahap 2**: Integrasi frontend antarmuka pengguna berbasis SPA (Fetch API, Live Debounced Search, modal In-Place Edit dengan `PATCH`, modal Create dengan `POST`, Delete dengan `DELETE`, Star dengan `POST`, dan feedback pesan kesalahan via toast), dokumentasi reflektif, serta penyusunan AI Disclosure.
+
+**Bagian yang Dibantu AI (Gemini 3.8):**
+- Pembuatan boilerplate `ExperienceSerializer` di `main/serializers.py` dengan validasi `validate_title`, `validate_description`, dan `validate_category`.
+- Implementasi API view berbasis fungsi (`experience_list`, `experience_detail`, `experience_star`) dengan dekorator `@api_view`, `@authentication_classes([SessionAuthentication])`, dan `@permission_classes`.
+- Pembuatan test suite `ExperienceAPITest` di `main/tests_experience_api.py` yang mencakup 13 skenario pengujian (4 peran otorisasi, penolakan perubahan database, validasi XSS, manipulasi star, read-only computed fields, dan pengujian CSRF dengan `APIClient(enforce_csrf_checks=True)`).
+- Penyesuaian skrip interaktif DOM di `templates/experience.html` untuk konsumsi endpoint `/api/v1/experiences/`, penanganan modal in-place edit, dan penanganan respons error HTTP 400/403.
+
+**Bagian yang Dibantu AI (Opus 5.5):**
+- Peninjauan struktur arsitektural permission matrix 4-peran dan verifikasi idempotensi metode `PUT`/`PATCH`.
+
+**Keterbatasan AI & Perbaikan Manual yang Dilakukan:**
+1. **Penanganan Kasus Uji Validasi HTML Strip Tags**:
+   - Pada awalnya, test validasi memasukkan payload `<script>alert(1)</script>` dengan ekspektasi status 400 Bad Request. Namun, fungsi `strip_tags()` bawaan Django membuang tag `<script>` tetapi mempertahankan teks `"alert(1)"`, sehingga serializer meloloskan input karena string tidak kosong.
+   - *Perbaikan Manual*: Saya memisahkan kasus uji menjadi dua skenario yang jelas: satu menguji penolakan input kosong atau yang murni hanya berisi tag HTML tanpa teks (`<script></script>`, `<b>  </b>`) yang menghasilkan 400 Bad Request, dan satu lagi menguji proses sanitasi bahwa tag HTML dibuang secara bersih (`<b>Senior Developer</b>` menjadi `"Senior Developer"`) dengan status 201 Created.
+2. **Progressive Enhancement & Kompatibilitas Test Suite Lama**:
+   - Untuk memastikan seluruh 36 test lama di `main/tests.py` tetap lulus (khususnya test yang memeriksa keberadaan URL edit dan ketidakhadiran URL delete pada template untuk Editor), elemen aksi pada kartu dipertahankan sebagai tag tautan `<a>` dengan atribut fallback `href` yang sesuai, yang dicegat secara elegan oleh JavaScript (`e.preventDefault()`) untuk membuka modal in-place edit dan pemanggilan API via AJAX.
+3. **Penanganan Jaringan PWS Off-Campus**:
+   - Menyadari bahwa server PWS Fasilkom UI (`pws.cs.ui.ac.id`) tidak dapat diakses tanpa koneksi VPN UI, eksekusi push diprioritaskan ke repositori GitHub publik (`origin/main`) dan mendokumentasikan panduan push manual ke PWS saat terhubung ke VPN.
