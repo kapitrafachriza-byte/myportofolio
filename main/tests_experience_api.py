@@ -66,22 +66,25 @@ class ExperienceAPITest(APITestCase):
         self.assertEqual(response_cat_empty.data, [])
 
     def test_guest_and_regular_user_cannot_mutate_and_database_unchanged(self):
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
             # Create attempt
             self.assertEqual(
                 self.client.post(self.list_url, self.payload, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             # Update attempt
             self.assertEqual(
                 self.client.patch(self.detail_url, {"title": "Malicious Change"}, format="json").status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
             # Delete attempt
             self.assertEqual(
                 self.client.delete(self.detail_url).status_code,
-                status.HTTP_403_FORBIDDEN,
+                expected_status,
             )
 
         # Verify DB is completely untouched
@@ -176,7 +179,7 @@ class ExperienceAPITest(APITestCase):
     def test_star_requires_login_and_toggles(self):
         # Anonymous rejected
         anon_res = self.client.post(self.star_url)
-        self.assertEqual(anon_res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(anon_res.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Authenticated user toggles star on
         self.client.force_authenticate(user=self.visitor)

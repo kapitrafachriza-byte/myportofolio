@@ -47,11 +47,14 @@ class ProjectAPITest(APITestCase):
         self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write(self):
-        for user in (None, self.visitor):
+        for user, expected_status in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.visitor, status.HTTP_403_FORBIDDEN),
+        ):
             self.client.force_authenticate(user=user)
-            self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, 403)
-            self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, 403)
-            self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
+            self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, expected_status)
+            self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, expected_status)
+            self.assertEqual(self.client.delete(self.detail_url).status_code, expected_status)
         self.assertEqual(Project.objects.count(), 1)
         self.project.refresh_from_db()
         self.assertEqual(self.project.title, "Portfolio")
@@ -93,7 +96,7 @@ class ProjectAPITest(APITestCase):
         self.assertFalse(Project.objects.filter(pk=self.project.id).exists())
 
     def test_star_requires_login_and_toggles(self):
-        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_401_UNAUTHORIZED)
         self.client.force_authenticate(user=self.visitor)
         response = self.client.post(self.star_url)
         self.assertTrue(response.data["is_starred"])
@@ -146,3 +149,39 @@ class ProjectAPITest(APITestCase):
             self.list_url, self.payload, format="json", HTTP_X_CSRFTOKEN=token,
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_token_auth_login_create_and_logout(self):
+        token_url = reverse("api:api_token_auth")
+        logout_url = reverse("api:api_logout")
+
+        # Obtain token with owner credentials
+        res = self.client.post(
+            token_url,
+            {"username": "owner", "password": "test-password"},
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        token = res.data["token"]
+
+        # Create project using Authorization: Token <key>
+        auth_header = f"Token {token}"
+        create_res = self.client.post(
+            self.list_url,
+            self.payload,
+            format="json",
+            HTTP_AUTHORIZATION=auth_header,
+        )
+        self.assertEqual(create_res.status_code, status.HTTP_201_CREATED)
+
+        # Logout revokes token with 204 No Content
+        logout_res = self.client.post(logout_url, HTTP_AUTHORIZATION=auth_header)
+        self.assertEqual(logout_res.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Revoked token is rejected with 401 Unauthorized
+        after_logout = self.client.post(
+            self.list_url,
+            self.payload,
+            format="json",
+            HTTP_AUTHORIZATION=auth_header,
+        )
+        self.assertEqual(after_logout.status_code, status.HTTP_401_UNAUTHORIZED)
